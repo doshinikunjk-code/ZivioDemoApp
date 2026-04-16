@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Desi Road × Zivio — AI Ordering System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Jost:wght@300;400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0A0705;--dark:#12100E;--card:#1A1510;--card2:#211C16;
+  --gold:#C8952A;--gold2:#E8B84B;--green:#22A05A;--green2:#2EC96E;
+  --cream:#F5EDD8;--cream2:#EDE0C4;--muted:#7A6A5A;--mu:#6A5A4A;
+  --brd:#2A2218;--brd2:#3A3020;--r:10px;--rl:14px;
+}
+body{font-family:'Jost',sans-serif;background:var(--black);color:var(--cream);min-height:100vh;overflow-x:hidden}
+/* ── TOPBAR ── */
+.topbar{height:64px;background:var(--dark);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:300}
+.t-brand{display:flex;align-items:center;gap:12px}
+.t-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)}
+.t-name{font-size:15px;font-weight:700;color:var(--cream)}
+.t-sub{font-size:10px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
+.t-tag{font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);font-style:italic}
+.t-right{display:flex;align-items:center;gap:10px}
+.t-live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);font-weight:600;letter-spacing:.06em}
+.t-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+.tbtn{background:rgba(200,149,42,.12);border:1px solid rgba(200,149,42,.25);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--gold);cursor:pointer;font-family:inherit;font-weight:600;transition:all .2s}
+.tbtn:hover{background:rgba(200,149,42,.25)}
+.tbtn.green{background:rgba(34,160,90,.15);border-color:rgba(34,160,90,.3);color:var(--green)}
+/* ── LAYOUT ── */
+.layout{display:flex;height:calc(100vh - 64px)}
+/* ── SIDEBAR ── */
+.sidebar{width:252px;flex-shrink:0;background:var(--dark);border-right:1px solid var(--brd);display:flex;flex-direction:column;overflow-y:auto}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--brd)}
+.sb-brand-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--cream)}
+.sb-brand-tag{font-size:11px;color:var(--mu);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.sb-inner{padding:12px 10px;flex:1}
+.sb-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--mu);padding:8px 6px 4px}
+.nb{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:1.5px solid transparent;border-radius:var(--r);font-size:13.5px;font-family:'Jost',sans-serif;font-weight:400;cursor:pointer;text-align:left;transition:all .18s;color:var(--mu);background:transparent;pointer-events:all}
+.nb:hover{color:var(--cream);background:rgba(255,255,255,.04)}
+.nb.on{color:var(--cream);background:rgba(200,149,42,.1);border-color:rgba(200,149,42,.3)}
+.nb.c-gold.on{border-color:rgba(200,149,42,.4);color:var(--gold2)}
+.nb.c-green.on{border-color:rgba(34,160,90,.4);color:var(--green2);background:rgba(34,160,90,.08)}
+.nb.c-red.on{border-color:rgba(180,60,60,.4);color:#FF8080;background:rgba(180,60,60,.08)}
+.nb.c-cream.on{border-color:rgba(200,180,140,.4);color:var(--cream)}
+.ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;pointer-events:none}
+.sb-foot{padding:14px;border-top:1px solid var(--brd);margin-top:auto}
+.gbox{background:rgba(34,160,90,.08);border:1px solid rgba(34,160,90,.2);border-radius:var(--r);padding:12px}
+.gbox-t{font-size:12px;font-weight:700;color:var(--green2);margin-bottom:4px}
+.gbox-b{font-size:11px;color:var(--mu);line-height:1.5}
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--black)}
+.screen{display:none}
+#sc-demo{display:block}
+/* ── PAGE HEADERS ── */
+.ph-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:10px}
+.ph-h{font-family:'Playfair Display',serif;font-size:38px;font-weight:800;line-height:1.15;color:var(--cream);margin-bottom:10px}
+.ph-h em{color:var(--gold);font-style:italic}
+.ph-s{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:680px}
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.stat{background:var(--card);border-radius:var(--rl);padding:20px 18px;border:1px solid var(--brd);position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat.gold::before{background:linear-gradient(to right,var(--gold),var(--gold2))}
+.stat.green::before{background:linear-gradient(to right,var(--green),var(--green2))}
+.stat.red::before{background:linear-gradient(to right,#8B1A1A,#C03030)}
+.stat.cream::before{background:linear-gradient(to right,var(--cream),var(--cream2))}
+.sv{font-family:'Playfair Display',serif;font-size:44px;font-weight:900;letter-spacing:-.03em;margin-bottom:4px;color:var(--cream)}
+.sl{font-size:12px;color:var(--mu);line-height:1.4}
+/* ── FLOW ── */
+.sd{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mu);margin:20px 0 14px}
+.flow{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.fs{background:var(--card);border-radius:var(--rl);padding:16px 18px;border:1px solid var(--brd);display:flex;gap:14px;align-items:flex-start}
+.fn{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;flex-shrink:0}
+.ft{font-size:14px;color:var(--cream);font-weight:500}
+.fd{font-size:12px;color:var(--mu);margin-top:3px;line-height:1.5}
+.btn-row{margin-top:20px}
+.btn{padding:12px 28px;border-radius:var(--r);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;border:none}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,149,42,.35)}
+/* ── DEMO SCREEN ── */
+.demo-header{margin-bottom:24px}
+.demo-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.dtab{padding:8px 18px;border-radius:20px;border:1.5px solid var(--brd2);background:transparent;font-size:12px;font-weight:600;font-family:inherit;color:var(--mu);cursor:pointer;transition:all .2s}
+.dtab:hover{color:var(--cream);border-color:var(--brd)}
+.dtab.active{background:rgba(200,149,42,.12);border-color:rgba(200,149,42,.4);color:var(--gold2)}
+/* ── CHAT WIDGET ── */
+.chat-wrap{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media(max-width:1100px){.chat-wrap{grid-template-columns:1fr}}
+.chat-panel{background:var(--dark);border-radius:16px;border:1px solid var(--brd);overflow:hidden}
+.chd{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:12px}
+.av{width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--gold);background:var(--card)}
+.av img{width:100%;height:100%;object-fit:cover}
+.av-text{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold)}
+.cn{font-size:14px;font-weight:600;color:var(--cream)}
+.cst{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px}
+.cst::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.lang-badge{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mu);background:var(--card2);border:1px solid var(--brd2);border-radius:8px;padding:3px 8px}
+.chd-spk{margin-left:6px}
+.cb{height:340px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.cb::-webkit-scrollbar{width:4px}
+.cb::-webkit-scrollbar-track{background:transparent}
+.cb::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px}
+/* ── MESSAGES ── */
+.mr{display:flex;opacity:0;transform:translateY(6px);transition:all .3s}
+.mr.show{opacity:1;transform:translateY(0)}
+.mr.ai{justify-content:flex-start}
+.mr:not(.ai){justify-content:flex-end}
+.bb{padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.65;max-width:82%;word-break:break-word}
+.bb.ai-gold{background:linear-gradient(135deg,rgba(200,149,42,.15),rgba(200,149,42,.08));border:1px solid rgba(200,149,42,.2);color:var(--cream2)}
+.bb.usr{background:var(--card2);border:1px solid var(--brd2);color:var(--cream)}
+/* ── TYPING ── */
+.mr.typ .bb{padding:12px 16px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin:0 2px;animation:bounce .9s infinite}
+.dot:nth-child(2){animation-delay:.15s}
+.dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+/* ── SPEAKER BTN ── */
+.spk-btn{display:inline-flex;align-items:center;gap:4px;margin-top:7px;background:rgba(200,149,42,.1);border:1px solid rgba(200,149,42,.25);border-radius:10px;padding:3px 9px;font-size:10px;font-weight:600;color:var(--gold);cursor:pointer;transition:all .15s;font-family:'Jost',sans-serif}
+.spk-btn:hover{background:rgba(200,149,42,.22)}
+.spk-btn::before{content:'🔊';font-size:11px}
+/* ── QUICK SUGGESTIONS ── */
+.qs{padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--brd)}
+.qb{padding:5px 12px;border-radius:14px;border:1px solid var(--brd2);background:transparent;font-size:11px;color:var(--mu);cursor:pointer;font-family:inherit;transition:all .15s}
+.qb:hover{border-color:var(--gold);color:var(--gold)}
+/* ── CHAT FOOTER ── */
+.cf{display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--brd)}
+.ci{flex:1;background:var(--card2);border:1px solid var(--brd2);border-radius:24px;padding:10px 16px;font-size:14px;color:var(--cream);font-family:inherit;outline:none;transition:border-color .2s}
+.ci:focus{border-color:var(--gold)}
+.ci::placeholder{color:var(--mu)}
+.send{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#000;font-weight:700;transition:all .15s;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--gold2))}
+.send:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(200,149,42,.35)}
+.mic-btn{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--brd2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;flex-shrink:0;background:var(--card2);color:var(--muted)}
+.mic-btn:hover{border-color:var(--gold);color:var(--gold)}
+.mic-btn.listening{background:linear-gradient(135deg,#8B1A1A,#C03030);border-color:#FF6060;color:#fff;animation:mpulse 1s ease-in-out infinite}
+@keyframes mpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* ── ORDER PANEL ── */
+.order-panel{background:var(--dark);border-radius:16px;border:1px solid var(--brd);overflow:hidden}
+.op-head{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.op-title{font-size:13px;font-weight:700;color:var(--cream);letter-spacing:.04em}
+.op-status{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:8px;background:rgba(200,149,42,.12);color:var(--gold);border:1px solid rgba(200,149,42,.25)}
+.op-status.active{background:rgba(34,160,90,.12);color:var(--green2);border-color:rgba(34,160,90,.25)}
+.op-body{padding:16px 18px}
+.op-empty{text-align:center;padding:24px;color:var(--mu);font-size:13px;line-height:1.6}
+.op-empty-icon{font-size:28px;margin-bottom:8px}
+.order-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)}
+.order-item:last-child{border-bottom:none}
+.oi-name{font-size:13px;color:var(--cream);font-weight:500}
+.oi-qty{font-size:11px;color:var(--mu)}
+.op-footer{padding:12px 18px;border-top:1px solid var(--brd)}
+.op-confirm{width:100%;padding:10px;border-radius:var(--r);background:linear-gradient(135deg,var(--green),var(--green2));border:none;color:#000;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s}
+.op-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(34,160,90,.35)}
+.op-confirm:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* ── MEMORY BADGE ── */
+.memory-badge{background:rgba(34,160,90,.1);border:1px solid rgba(34,160,90,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green2);display:flex;align-items:center;gap:8px;display:none}
+/* ── TICKET ── */
+.ticket-wrap{padding:14px 18px;border-top:1px solid var(--brd);display:none}
+.t-title{font-size:13px;font-weight:700;color:var(--cream)}
+.t-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.t-badge{font-size:10px;font-weight:700;letter-spacing:.06em;background:rgba(34,160,90,.12);color:var(--green2);border:1px solid rgba(34,160,90,.25);border-radius:8px;padding:3px 10px}
+.t-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.t-items{font-size:12px;color:var(--cream2);line-height:1.8}
+.t-k{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:rgba(34,160,90,.08);border-radius:8px;font-size:11px;color:var(--green2)}
+/* ── FEATURE GRID ── */
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.fc{background:var(--card);border-radius:var(--rl);padding:16px 18px;border:1px solid var(--brd)}
+.fc-icon{font-size:22px;margin-bottom:8px}
+.fc-title{font-size:13px;font-weight:700;color:var(--cream);margin-bottom:4px}
+.fc-desc{font-size:12px;color:var(--mu);line-height:1.5}
+.fc-tag{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--gold);margin-top:6px}
+/* ── TABLE ── */
+.ct{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}
+.ct th{padding:10px 14px;text-align:left;border-bottom:1px solid var(--brd);color:var(--mu);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.ct td{padding:10px 14px;border-bottom:1px solid var(--brd);color:var(--cream2);vertical-align:middle}
+.ct tr:last-child td{border-bottom:none}
+.ct .yes{color:var(--green2);font-weight:700}
+.ct .no{color:var(--mu)}
+.ct .hl td{background:rgba(34,160,90,.06);color:var(--cream)}
+/* ── PRICING ── */
+.price-card{background:var(--card);border-radius:var(--rl);padding:28px;border:1px solid rgba(200,149,42,.3);max-width:500px;margin-bottom:20px}
+.price-amount{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:var(--gold);line-height:1}
+.price-period{font-size:14px;color:var(--mu);margin-top:4px}
+.price-items{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.price-items li{font-size:13px;color:var(--cream2);display:flex;align-items:center;gap:8px}
+.price-items li::before{content:'✓';color:var(--green2);font-weight:700;flex-shrink:0}
+/* ── GUARANTEE ── */
+.guarantee{background:rgba(34,160,90,.06);border:1px solid rgba(34,160,90,.2);border-radius:var(--rl);padding:20px;margin-top:20px}
+.guarantee-title{font-size:14px;font-weight:700;color:var(--green2);margin-bottom:6px}
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.screen.show{animation:fadeUp .25s ease}
+/* ── CALL MODAL ── */
+.call-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center}
+.call-box{background:var(--dark);border:1px solid var(--brd);border-radius:20px;padding:36px;width:380px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+@keyframes rb{0%,100%{height:8px;opacity:.3}50%{height:38px;opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="t-brand">
+    <img class="t-logo" src="https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg" onerror="this.style.display='none'">
+    <div>
+      <div class="t-name">ZIVIO AI</div>
+      <div class="t-sub">AI Ordering System — Demo</div>
+    </div>
+  </div>
+  <div class="t-tag">Desi Daru Desi Khana</div>
+  <div class="t-right">
+    <button class="tbtn green" onclick="startCallDemo()">📞 Demo Call</button>
+    <button class="tbtn" id="spk-toggle" onclick="toggleSpeaker()">🔊 Voice</button>
+    <div class="t-live"><div class="t-dot"></div>AI Active</div>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-name">Desi Road Restaurant</div>
+    <div class="sb-brand-tag">Elevated Indian Cuisine · Brampton</div>
+  </div>
+  <div class="sb-inner">
+    <div class="sb-sec">Presentation</div>
+    <button class="nb c-red" onclick="S('problem',this)"><span class="ic">😔</span>The Problem</button>
+    <button class="nb c-green" onclick="S('solution',this)"><span class="ic">💡</span>The Solution</button>
+    <div class="sb-sec">Live Demo</div>
+    <button class="nb c-gold on" onclick="S('demo',this)"><span class="ic">💬</span>AI Ordering Demo</button>
+    <div class="sb-sec">Business Case</div>
+    <button class="nb c-green" onclick="S('features',this)"><span class="ic">⚡</span>All Features</button>
+    <button class="nb c-red" onclick="S('compare',this)"><span class="ic">⚖️</span>vs Uber Eats</button>
+    <button class="nb c-gold" onclick="S('kitchen',this)"><span class="ic">🔔</span>Kitchen Alerts</button>
+    <button class="nb c-gold" onclick="S('campaign',this)"><span class="ic">📢</span>Daily Specials</button>
+    <button class="nb c-cream" onclick="S('pricing',this)"><span class="ic">💰</span>Pricing</button>
+    <button class="nb c-green" onclick="S('start',this)"><span class="ic">✅</span>Get Started</button>
+  </div>
+  <div class="sb-foot">
+    <div class="gbox">
+      <div class="gbox-t">🛡️ 30-Day Guarantee</div>
+      <div class="gbox-b">More orders in Month 1 than the fee — or every dollar back.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════ DEMO SCREEN -->
+<div class="screen" id="sc-demo">
+  <div class="demo-header">
+    <div class="ph-eyebrow">Live Demo — Try It Now</div>
+    <div class="ph-h">Your customer. Your number.<br><em>One AI. Every language.</em></div>
+    <div class="ph-s">This is exactly what a customer experiences on WhatsApp or phone. Type in English, Punjabi, Hindi — or mix all three. The AI handles it all, remembers returning customers, and never misses an order.</div>
+  </div>
+
+  <!-- Language selector tabs -->
+  <div class="demo-tabs">
+    <button class="dtab active" onclick="setLang('auto',this)">🔄 Auto-detect</button>
+    <button class="dtab" onclick="setLang('en',this)">🇨🇦 English</button>
+    <button class="dtab" onclick="setLang('pa',this)">🇮🇳 ਪੰਜਾਬੀ</button>
+    <button class="dtab" onclick="setLang('hi',this)">🇮🇳 हिन्दी</button>
+  </div>
+
+  <div class="chat-wrap">
+    <!-- CHAT PANEL -->
+    <div class="chat-panel">
+      <div class="chd">
+        <div class="av">
+          <img src="https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg" onerror="this.style.display='none';this.parentElement.querySelector('.av-text').style.display='block'">
+          <div class="av-text" style="display:none">DR</div>
+        </div>
+        <div>
+          <div class="cn">Desi Road</div>
+          <div class="cst">Zivio AI — (289) 499-1000</div>
+        </div>
+        <div class="lang-badge" id="lang-badge">🔄 Auto</div>
+        <button class="tbtn chd-spk" id="spk-chat" onclick="toggleSpeaker()" style="margin-left:8px;font-size:10px;padding:4px 10px">🔊</button>
+      </div>
+
+      <!-- Memory badge -->
+      <div class="memory-badge" id="memory-badge">
+        👋 <span id="memory-text">Welcome back! I remember your last order.</span>
+      </div>
+
+      <div class="cb" id="chat-body"></div>
+
+      <!-- Quick suggestions -->
+      <div class="qs" id="quick-sugg">
+        <button class="qb" onclick="qm('Butter Chicken Cones chahida')">🍛 Butter Chicken</button>
+        <button class="qb" onclick="qm('Lamb Chops please')">🍖 Lamb Chops</button>
+        <button class="qb" onclick="qm('What is the menu?')">📋 Menu</button>
+        <button class="qb" onclick="qm('ਸਤ ਸ੍ਰੀ ਅਕਾਲ')">🙏 ਸਤ ਸ੍ਰੀ ਅਕਾਲ</button>
+        <button class="qb" onclick="qm('नमस्ते')">🙏 नमस्ते</button>
+      </div>
+
+      <!-- Input -->
+      <div class="cf">
+        <input class="ci" id="chat-input" placeholder="Type in English, ਪੰਜਾਬੀ, हिन्दी or mix...">
+        <button class="mic-btn" id="mic-btn-wa" onclick="toggleWAMic(this)" title="Hold to speak">🎤</button>
+        <button class="send" onclick="so()">➤</button>
+      </div>
+    </div>
+
+    <!-- ORDER PANEL -->
+    <div class="order-panel">
+      <div class="op-head">
+        <div class="op-title">Current Order</div>
+        <div class="op-status" id="order-status">Waiting</div>
+      </div>
+      <div class="op-body" id="order-body">
+        <div class="op-empty">
+          <div class="op-empty-icon">🛒</div>
+          <div>Your order will appear here as you chat</div>
+        </div>
+      </div>
+      <div class="ticket-wrap" id="ticket-wrap"></div>
+      <div class="op-footer" id="order-footer" style="display:none">
+        <button class="op-confirm" id="confirm-btn" onclick="confirmOrder()">✅ Confirm Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ PROBLEM -->
+<div class="screen" id="sc-problem">
+  <div class="ph-eyebrow">Step 1 — The Opportunity</div>
+  <div class="ph-h">Desi Road is losing orders<br><em>every single night.</em></div>
+  <div class="ph-s">When the phone rings at 10pm and the kitchen is busy. When a Punjabi customer WhatsApps and gets no reply until morning. Every missed contact is a lost table — and lost revenue that never comes back.</div>
+  <div class="stats">
+    <div class="stat red"><div class="sv">73%</div><div class="sl">Never call back if nobody answers first time</div></div>
+    <div class="stat gold"><div class="sv">10pm</div><div class="sl">Peak hour when orders are lost to voicemail</div></div>
+    <div class="stat red"><div class="sv">30%</div><div class="sl">Commission Uber Eats takes per order, forever</div></div>
+    <div class="stat gold"><div class="sv">$0</div><div class="sl">Revenue from Punjabi customers who got no reply</div></div>
+  </div>
+  <div class="sd">What is happening right now at Desi Road</div>
+  <div class="flow">
+    <div class="fs"><div class="fn">📞</div><div><div class="ft">Phone rings at 10pm</div><div class="fd">Staff are busy. Nobody answers. Customer calls a different restaurant.</div></div></div>
+    <div class="fs"><div class="fn">💬</div><div><div class="ft">WhatsApp at 9pm — no reply</div><div class="fd">Sits unread overnight. Customer orders Uber Eats — Uber keeps 30%.</div></div></div>
+    <div class="fs"><div class="fn">🗣️</div><div><div class="ft">Punjabi customer messages</div><div class="fd">No Punjabi-speaking staff at that hour. Customer never hears back.</div></div></div>
+    <div class="fs"><div class="fn">🔄</div><div><div class="ft">Regular customer orders every Friday</div><div class="fd">Has to repeat his full order every single time. No recognition.</div></div></div>
+  </div>
+  <div class="btn-row"><button class="btn btn-gold" onclick="S('solution',document.querySelector('.nb.c-green'))">See what Zivio does →</button></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SOLUTION -->
+<div class="screen" id="sc-solution">
+  <div class="ph-eyebrow">Step 2 — The Solution</div>
+  <div class="ph-h">Every order. Every language.<br><em>Every hour.</em></div>
+  <div class="ph-s">Your existing WhatsApp number and phone line — completely unchanged. Zivio AI handles everything silently behind it, 24 hours a day.</div>
+  <div class="stats">
+    <div class="stat green"><div class="sv">24/7</div><div class="sl">Orders taken — midnight, Sunday, Diwali, Christmas</div></div>
+    <div class="stat gold"><div class="sv">3</div><div class="sl">Languages — English, Punjabi, Hindi — auto-detected</div></div>
+    <div class="stat green"><div class="sv">20+</div><div class="sl">Simultaneous conversations handled at once</div></div>
+    <div class="stat gold"><div class="sv">$0</div><div class="sl">Commission per order — flat fee only, forever</div></div>
+  </div>
+  <div class="sd">How it works at Desi Road</div>
+  <div class="flow">
+    <div class="fs"><div class="fn">1</div><div><div class="ft">Customer contacts Desi Road — same number as always</div><div class="fd">WhatsApp or phone on (289) 499-1000. Nothing changes for the customer.</div></div></div>
+    <div class="fs"><div class="fn">2</div><div><div class="ft">AI detects language and responds instantly</div><div class="fd">Punjabi → Punjabi. Hindi → Hindi. English → English. Mixed → matched naturally.</div></div></div>
+    <div class="fs"><div class="fn">3</div><div><div class="ft">Takes the full order and confirms</div><div class="fd">Remembers returning customers. Family can add items freely.</div></div></div>
+    <div class="fs"><div class="fn">4</div><div><div class="ft">Order goes to kitchen instantly</div><div class="fd">Full formatted ticket sent to kitchen phone or receipt printer.</div></div></div>
+    <div class="fs"><div class="fn">5</div><div><div class="ft">Customer arrives — pays — you keep 100%</div><div class="fd">No app. No website. No commission. Zero.</div></div></div>
+  </div>
+  <div class="btn-row"><button class="btn btn-gold" onclick="S('demo',document.querySelector('.nb.c-gold'))">See it live →</button></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ FEATURES -->
+<div class="screen" id="sc-features">
+  <div class="ph-eyebrow">Complete Feature Set</div>
+  <div class="ph-h">Everything included.<br><em>One flat price. Forever.</em></div>
+  <div class="ph-s">Every feature below is in your $799/month. No per-order fees. No commissions. No hidden charges.</div>
+  <div class="fg">
+    <div class="fc"><div class="fc-icon">📞</div><div class="fc-title">24/7 Phone Ordering</div><div class="fc-desc">AI voice answers in 2 rings. Takes full order, confirms. Even at 2am.</div><div class="fc-tag">Voice AI</div></div>
+    <div class="fc"><div class="fc-icon">💬</div><div class="fc-title">WhatsApp Ordering</div><div class="fc-desc">On your existing number. Customers text the same number they always have.</div><div class="fc-tag">Existing Number</div></div>
+    <div class="fc"><div class="fc-icon">🗣️</div><div class="fc-title">3 Languages Auto-detect</div><div class="fc-desc">English, Punjabi, Hindi + code-switching. Auto-detected on every message.</div><div class="fc-tag">Brampton-ready</div></div>
+    <div class="fc"><div class="fc-icon">🧠</div><div class="fc-title">Customer Memory</div><div class="fc-desc">"Welcome back Raj ji! Same as usual?" One-tap reorder after 3rd visit.</div><div class="fc-tag">Loyalty</div></div>
+    <div class="fc"><div class="fc-icon">📦</div><div class="fc-title">Add to Existing Order</div><div class="fc-desc">Customer calls back within 60 mins — AI knows their order and adds items.</div><div class="fc-tag">Smart Orders</div></div>
+    <div class="fc"><div class="fc-icon">🔔</div><div class="fc-title">Kitchen Alerts Instant</div><div class="fc-desc">Every confirmed order to kitchen WhatsApp or receipt printer in 3 seconds.</div><div class="fc-tag">Kitchen</div></div>
+    <div class="fc"><div class="fc-icon">✅</div><div class="fc-title">Order Ready Notification</div><div class="fc-desc">Food ready → AI messages customer instantly. Zero wait frustration.</div><div class="fc-tag">Zero Wait</div></div>
+    <div class="fc"><div class="fc-icon">📢</div><div class="fc-title">Daily Special Campaigns</div><div class="fc-desc">11am every day: AI broadcasts today's special to 300+ subscribers.</div><div class="fc-tag">Marketing</div></div>
+    <div class="fc"><div class="fc-icon">⭐</div><div class="fc-title">Google Review Automation</div><div class="fc-desc">Happy customer → review request. Unhappy → owner alert before complaint.</div><div class="fc-tag">Reputation</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ COMPARE -->
+<div class="screen" id="sc-compare">
+  <div class="ph-eyebrow">The Honest Numbers</div>
+  <div class="ph-h">Uber Eats is taking<br><em>thousands from Desi Road.</em></div>
+  <div class="ph-s">Every month. Every order. Silently. The commission math is brutal.</div>
+  <table class="ct">
+    <thead><tr><th>Feature</th><th>Uber Eats</th><th>DoorDash</th><th>Zivio ✓</th></tr></thead>
+    <tbody>
+      <tr><td>Monthly fee</td><td>$0</td><td>$0</td><td class="yes">$799 flat</td></tr>
+      <tr><td>Commission per order</td><td class="no">25–35%</td><td class="no">25–30%</td><td class="yes">0%</td></tr>
+      <tr><td>$35 order — you keep</td><td class="no">~$24</td><td class="no">~$25</td><td class="yes">$35.00</td></tr>
+      <tr><td>You own the customer</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Punjabi / Hindi support</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Returning customer memory</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>24/7 phone ordering</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr class="hl"><td>Break-even at</td><td>—</td><td>—</td><td class="yes">~27 orders/month</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ KITCHEN -->
+<div class="screen" id="sc-kitchen">
+  <div class="ph-eyebrow">Kitchen Alert System</div>
+  <div class="ph-h">Every order to the kitchen<br><em>in under 3 seconds.</em></div>
+  <div class="ph-s">The moment a customer confirms, the kitchen receives a fully formatted ticket. Zero manual entry. Zero missed orders.</div>
+  <div class="flow">
+    <div class="fs"><div class="fn">📱</div><div><div class="ft">WhatsApp to kitchen phone</div><div class="fd">Full ticket instantly. Clear, unambiguous, no errors.</div></div></div>
+    <div class="fs"><div class="fn">🖨️</div><div><div class="ft">Bluetooth receipt printer</div><div class="fd">$45 one-time hardware. Order prints automatically.</div></div></div>
+    <div class="fs"><div class="fn">✅</div><div><div class="ft">Order ready → customer alert</div><div class="fd">AI messages customer: "Your order is ready at Desi Road!"</div></div></div>
+    <div class="fs"><div class="fn">📋</div><div><div class="ft">Full order log</div><div class="fd">Every order stored — time, items, language, returning flag.</div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ CAMPAIGN -->
+<div class="screen" id="sc-campaign">
+  <div class="ph-eyebrow">Daily Special Campaigns</div>
+  <div class="ph-h">One message.<br><em>300 customers. 40 orders.</em></div>
+  <div class="ph-s">Every day at 11am, Zivio broadcasts Desi Road's daily special to the full subscriber list — in all 3 languages simultaneously.</div>
+  <div class="stats">
+    <div class="stat gold"><div class="sv">284</div><div class="sl">Subscribers receiving the broadcast</div></div>
+    <div class="stat green"><div class="sv">47</div><div class="sl">Orders in 2 hours of one broadcast</div></div>
+    <div class="stat gold"><div class="sv">$1,034</div><div class="sl">Revenue from a single automated message</div></div>
+    <div class="stat green"><div class="sv">$7.10</div><div class="sl">Total cost for that broadcast</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ PRICING -->
+<div class="screen" id="sc-pricing">
+  <div class="ph-eyebrow">Pricing & Guarantee</div>
+  <div class="ph-h">One price. Everything.<br><em>Zero risk.</em></div>
+  <div class="price-card">
+    <div class="price-amount">$799</div>
+    <div class="price-period">/month CAD · First month completely free · No contract</div>
+    <ul class="price-items">
+      <li>Full setup and configuration — included free</li>
+      <li>WhatsApp on Desi Road's existing number</li>
+      <li>24/7 phone voice agent on (289) 499-1000</li>
+      <li>English + Punjabi + Hindi + code-switching</li>
+      <li>Customer memory + returning customer recognition</li>
+      <li>Add-to-existing-order within 60 minutes</li>
+      <li>Kitchen alert system</li>
+      <li>Daily special campaigns</li>
+      <li>Google review automation</li>
+      <li>Commission per order — $0 forever</li>
+    </ul>
+  </div>
+  <div class="guarantee">
+    <div class="guarantee-title">🛡️ The Zivio 30-Day Guarantee</div>
+    <p style="font-size:13px;color:var(--mu);line-height:1.6">If Zivio does not generate more in recovered orders and saved commission than $799 in your first 30 days — we refund every dollar. No questions. The first month is free anyway. We take all the risk.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ START -->
+<div class="screen" id="sc-start">
+  <div class="ph-eyebrow">Let's Get Started</div>
+  <div class="ph-h">Desi Road goes live<br><em>in 5 days.</em></div>
+  <div class="ph-s">No payment. No technical work from you or your team. Nik handles everything.</div>
+  <div class="flow">
+    <div class="fs"><div class="fn">1</div><div><div class="ft">Today — Handshake. Zero payment.</div><div class="fd">Nik needs: your WhatsApp number, a copy of your menu, and 1 hour this week.</div></div></div>
+    <div class="fs"><div class="fn">2</div><div><div class="ft">Day 1–2 — Nik builds the full system</div><div class="fd">Menu configured in 3 languages. WhatsApp connected. Phone set up. Kitchen alerts ready.</div></div></div>
+    <div class="fs"><div class="fn">3</div><div><div class="ft">Day 3 — Live test together at Desi Road</div><div class="fd">Order in Punjabi. Call the number. Confirm a kitchen alert. Staff briefed in 10 minutes.</div></div></div>
+    <div class="fs"><div class="fn">4</div><div><div class="ft">Day 5 — Go live. Orders start.</div><div class="fd">Every missed call, every WhatsApp at 10pm, every Punjabi customer — answered.</div></div></div>
+    <div class="fs"><div class="fn">5</div><div><div class="ft">Day 30 — Review results. Pay only if it worked.</div><div class="fd">If the numbers don't justify $799 — full refund, no argument.</div></div></div>
+  </div>
+  <div class="btn-row"><button class="btn btn-gold" onclick="S('demo',document.querySelector('.nb.c-gold'))">Try the Demo →</button></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- CALL MODAL -->
+<div class="call-modal" id="call-modal">
+  <div class="call-box">
+    <div id="call-icon" style="font-size:52px;margin-bottom:14px">📞</div>
+    <div style="font-size:18px;font-weight:700;color:var(--cream);margin-bottom:4px">Desi Road AI</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:18px">(289) 499-1000 · Powered by Zivio</div>
+    <div id="call-status" style="font-size:13px;color:var(--green);min-height:20px;margin-bottom:12px"></div>
+    <div id="call-ripple" style="display:none;justify-content:center;gap:5px;align-items:flex-end;height:44px;margin-bottom:16px">
+      <div style="width:5px;background:var(--gold);border-radius:3px;animation:rb .7s ease-in-out infinite .0s"></div>
+      <div style="width:5px;background:var(--gold);border-radius:3px;animation:rb .7s ease-in-out infinite .1s"></div>
+      <div style="width:5px;background:var(--gold);border-radius:3px;animation:rb .7s ease-in-out infinite .2s"></div>
+      <div style="width:5px;background:var(--gold);border-radius:3px;animation:rb .7s ease-in-out infinite .15s"></div>
+      <div style="width:5px;background:var(--gold);border-radius:3px;animation:rb .7s ease-in-out infinite .05s"></div>
+    </div>
+    <div id="call-log" style="background:#0A0705;border-radius:10px;padding:14px;min-height:80px;max-height:160px;overflow-y:auto;text-align:left;font-size:12px;line-height:1.7;color:var(--cream2);margin-bottom:20px;display:none"></div>
+    <div style="display:flex;gap:14px;justify-content:center">
+      <button id="call-mic-btn" onclick="toggleCallMic()" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;font-size:20px;cursor:pointer">🎤</button>
+      <button onclick="endCall()" style="width:44px;height:44px;border-radius:50%;background:#6B1A1A;border:none;font-size:17px;cursor:pointer;align-self:center">📵</button>
+    </div>
+    <div style="font-size:11px;color:var(--mu);margin-top:14px">Tap 🎤 to speak · 📵 to end</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZIVIO DEMO — UNIFIED AI AGENT
+// One voice (Riya Rao), one agent, full memory, add-to-order, all languages
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function S(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; });
+  const target = document.getElementById('sc-' + id);
+  if (target) { target.style.display = 'block'; }
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  const navBtn = btn ? (btn.closest('.nb') || btn) : null;
+  if (navBtn) navBtn.classList.add('on');
+  const c = document.querySelector('.content');
+  if (c) c.scrollTop = 0;
+}
+
+// ── VOICE ─────────────────────────────────────────────────────────────────────
+const EL_VOICE_ID = 'mActWQg9kibLro6Z2ouY'; // Riya Rao — same voice for ALL languages
+let SPEAKER_ON    = true;
+let currentAudio  = null;
+
+function toggleSpeaker() {
+  SPEAKER_ON = !SPEAKER_ON;
+  const btns = [document.getElementById('spk-toggle'), document.getElementById('spk-chat')];
+  btns.forEach(b => { if (b) b.textContent = SPEAKER_ON ? '🔊 Voice' : '🔇 Muted'; });
+  if (!SPEAKER_ON && currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (!SPEAKER_ON && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+async function speak(text) {
+  if (!SPEAKER_ON || !text) return;
+  const clean = text
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+    .replace(/[🍛🍖🌿🧀🥙🌮🍞🥭☕🍮🍨🔥✅🙏😊🌟👋📢📞💬🔔✓⚡💰😔💡🇨🇦🇮🇳🔀🛒📦⭐🗣️🔄]/g, '')
+    .replace(/—/g, ', ').replace(/•/g, '').replace(/\n/g, '. ').replace(/  +/g, ' ').trim();
+  if (!clean) return;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  try {
+    // Prepend Hindi primer so Riya always uses Indian phonetics
+    const primedText = 'जी। ' + clean;
+    const r = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: primedText, voice_id: EL_VOICE_ID })
+    });
+    if (!r.ok) throw new Error('TTS failed');
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.playbackRate = 0.97;
+    await currentAudio.play();
+    currentAudio.onended = () => URL.revokeObjectURL(url);
+  } catch(e) {
+    // Browser TTS fallback
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(clean);
+    utt.rate = 0.92; utt.pitch = 0.95;
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => v.name === 'Lekha') ||
+              voices.find(v => v.lang === 'hi-IN') ||
+              voices.find(v => v.name === 'Samantha');
+    if (v) utt.voice = v;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+function addSpeakerBtn(el, text) {
+  el.querySelectorAll('.spk-btn').forEach(b => b.remove());
+  const btn = document.createElement('button');
+  btn.className = 'spk-btn';
+  btn.textContent = 'Listen';
+  btn.style.display = 'inline-flex';
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    speak(text);
+    btn.textContent = 'Playing...';
+    setTimeout(() => btn.textContent = 'Listen', 3500);
+  };
+  el.appendChild(btn);
+}
+
+// ── ORDER MEMORY SYSTEM ───────────────────────────────────────────────────────
+// Stores orders by "session" (60 min window)
+const ORDER_MEMORY = {};
+let currentOrderItems = [];
+let orderConfirmed    = false;
+
+function saveOrderToMemory(items) {
+  const key = 'desi_road_last_order';
+  const data = { items, time: Date.now(), id: 'DR-' + Math.floor(2800 + Math.random()*99) };
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+  return data;
+}
+
+function getRecentOrder() {
+  try {
+    const raw  = localStorage.getItem('desi_road_last_order');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    const age  = (Date.now() - data.time) / 60000; // minutes
+    if (age < 60) return data; // within 60 mins
+    return null;
+  } catch(e) { return null; }
+}
+
+function clearOrder() {
+  currentOrderItems = [];
+  orderConfirmed = false;
+  updateOrderPanel();
+}
+
+function detectOrderItems(text) {
+  const menu = {
+    'butter chicken':     'Butter Chicken Cones',
+    'bc cone':            'Butter Chicken Cones',
+    'lamb chop':          'Shahi Lamb Chops',
+    'lamb':               'Shahi Lamb Chops',
+    'dal makhani':        'Dal Makhani',
+    'palak paneer':       'Palak Paneer',
+    'paneer':             'Palak Paneer',
+    'raj kachori':        'Raj Kachori',
+    'kachori':            'Raj Kachori',
+    'chicken tikka':      'Chicken Tikka',
+    'tikka':              'Chicken Tikka',
+    'biryani':            'Chicken Biryani',
+    'seekh kebab':        'Seekh Kebab',
+    'kebab':              'Seekh Kebab',
+    'garlic naan':        'Garlic Naan',
+    'naan':               'Garlic Naan',
+    'butter naan':        'Butter Naan',
+    'mango lassi':        'Mango Lassi',
+    'lassi':              'Mango Lassi',
+    'masala chai':        'Masala Chai',
+    'chai':               'Masala Chai',
+    'gulab jamun':        'Gulab Jamun',
+    'kulfi':              'Kulfi Falooda',
+    // Punjabi
+    'ਬਟਰ ਚਿਕਨ':          'Butter Chicken Cones',
+    'ਨਾਨ':               'Garlic Naan',
+    'ਲੱਸੀ':              'Mango Lassi',
+    'ਲੈਂਬ':              'Shahi Lamb Chops',
+    // Hindi
+    'बटर चिकन':          'Butter Chicken Cones',
+    'नान':               'Garlic Naan',
+    'लस्सी':             'Mango Lassi',
+    'लैंब':              'Shahi Lamb Chops',
+  };
+  const l = text.toLowerCase();
+  let found = [];
+  for (const [key, val] of Object.entries(menu)) {
+    if (l.includes(key) && !currentOrderItems.includes(val)) {
+      found.push(val);
+    }
+  }
+  return found;
+}
+
+function updateOrderPanel() {
+  const body   = document.getElementById('order-body');
+  const status = document.getElementById('order-status');
+  const footer = document.getElementById('order-footer');
+
+  if (currentOrderItems.length === 0) {
+    body.innerHTML = '<div class="op-empty"><div class="op-empty-icon">🛒</div><div>Your order will appear here as you chat</div></div>';
+    status.textContent = 'Waiting';
+    status.className   = 'op-status';
+    footer.style.display = 'none';
+    return;
+  }
+
+  status.textContent = orderConfirmed ? 'Confirmed ✓' : 'Building...';
+  status.className   = 'op-status' + (orderConfirmed ? ' active' : '');
+  footer.style.display = orderConfirmed ? 'none' : 'block';
+
+  body.innerHTML = currentOrderItems.map(item =>
+    `<div class="order-item"><div class="oi-name">${item}</div><div class="oi-qty">×1</div></div>`
+  ).join('');
+}
+
+function confirmOrder() {
+  if (currentOrderItems.length === 0) return;
+  orderConfirmed = true;
+  const data = saveOrderToMemory([...currentOrderItems]);
+  updateOrderPanel();
+
+  // Show kitchen ticket
+  const tw = document.getElementById('ticket-wrap');
+  tw.style.display = 'block';
+  tw.innerHTML = `
+    <div class="t-hd">
+      <div><div class="t-title">Order ${data.id} — Desi Road</div><div class="t-sub">Pickup · Est ready in ~20 mins · 185 Fletchers Creek Blvd</div></div>
+      <span class="t-badge">⏳ Preparing</span>
+    </div>
+    <div class="t-items">${currentOrderItems.map(i => '• ' + i).join('<br>')}</div>
+    <div class="t-k">🔔 <strong>Kitchen alert sent instantly</strong></div>`;
+  document.getElementById('order-footer').style.display = 'none';
+}
+
+// ── CHAT STATE ────────────────────────────────────────────────────────────────
+let HISTORY  = [];
+let TYPING   = false;
+let LANG     = 'auto'; // auto | en | pa | hi
+setInterval(() => { TYPING = false; }, 15000);
+
+function setLang(lang, btn) {
+  LANG = lang;
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const badge = document.getElementById('lang-badge');
+  const labels = { auto:'🔄 Auto', en:'🇨🇦 EN', pa:'🇮🇳 PA', hi:'🇮🇳 HI' };
+  if (badge) badge.textContent = labels[lang] || '🔄 Auto';
+}
+
+// ── SYSTEM PROMPTS ────────────────────────────────────────────────────────────
+const _MENU = 'Butter Chicken Cones, Shahi Lamb Chops, Dal Makhani, Palak Paneer, Raj Kachori, Paneer Hardshell Tacos, Chicken Tikka, Chicken Biryani, Seekh Kebab, Garlic Naan, Butter Naan, Mango Lassi, Masala Chai, Gulab Jamun, Kulfi Falooda';
+const _LOC  = 'LOCATION: 185 Fletchers Creek Blvd or 100 Peel Centre Dr, Brampton | PHONE: (289) 499-1000 | HOURS: Mon-Sat 11am-11pm, Sun 12pm-10pm';
+
+const PROMPTS = {
+  auto: `You are the AI ordering assistant at Desi Road, Brampton. WhatsApp ordering. NOT AI — a real warm local team member.
+CRITICAL LANGUAGE RULE: ALWAYS reply in the SAME language the customer uses. If they write Hindi — reply Hindi. Punjabi — reply Punjabi. English — reply English. Mix — match their mix exactly. Never switch languages on your own.
+TONE: Warm, natural, conversational — like a friendly local Brampton community member. Garmjoshi. Apnapan.
+RULES: Take order. Confirm. Close. 1-2 lines max. No upsells. No extra questions.
+ORDER MEMORY: If customer says "I just ordered" or "add to my order" or "called earlier" — check if they mention items from a previous order and acknowledge it naturally.
+PRICE: Never mention unless asked directly.
+NEVER: Great choice / bullet points / price unprompted / say you are AI / restart conversation if second person talks
+ORDER COMPLETE: "[items] — ready in about 20 mins. See you at Desi Road!"
+MENU: ${_MENU}. Tonight special: Shahi Lamb Chops discounted.
+${_LOC}`,
+
+  en: `CRITICAL: Reply ONLY in English. You are Desi Road Brampton AI ordering. NOT AI — warm local English speaker.
+TONE: Warm, friendly, conversational — like a helpful community member.
+RULES: Take order. Confirm. Close. 1-2 lines. No upsells. No extra questions.
+Good replies: "Butter Chicken Cones — done! Anything else?" / "Sure, noted! Anything else?"
+ORDER COMPLETE: "So that's [items] — ready in 20 mins. See you at Desi Road!"
+PRICE: Never unless asked. NEVER say you are AI.
+MENU: ${_MENU}. Tonight: Shahi Lamb Chops discounted. ${_LOC}`,
+
+  pa: `ਜ਼ਰੂਰੀ: ਸਿਰਫ਼ ਪੰਜਾਬੀ ਵਿੱਚ ਜਵਾਬ ਦਿਓ। ਹਰ ਜਵਾਬ ਗੁਰਮੁਖੀ ਵਿੱਚ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ। ਅੰਗਰੇਜ਼ੀ ਬਿਲਕੁਲ ਨਹੀਂ।
+ਟੋਨ: ਗਰਮਜੋਸ਼, ਕੁਦਰਤੀ, ਅਪਣੱਤ — ਜਿਵੇਂ ਕੋਈ ਆਪਣਾ ਬੋਲ ਰਿਹਾ ਹੋਵੇ।
+ਨਿਯਮ: ਆਰਡਰ ਲਓ, ਪੱਕਾ ਕਰੋ, ਬੰਦ ਕਰੋ। 1-2 ਲਾਈਨਾਂ।
+ਚੰਗੇ ਜਵਾਬ: "ਬਟਰ ਚਿਕਨ — ਨੋਟ ਕਰ ਲਿਆ! ਹੋਰ ਕੁਝ?" / "ਹਾਂ ਜੀ! ਹੋਰ ਕੁਝ?"
+ਆਰਡਰ ਪੂਰਾ: "[items] — 20 ਮਿੰਟਾਂ ਵਿੱਚ ਤਿਆਰ। ਦੇਸੀ ਰੋਡ ਵਿੱਚ ਮਿਲਦੇ ਹਾਂ!"
+ਕੀਮਤ: ਸਿਰਫ਼ ਪੁੱਛਣ ਤੇ। AI ਨਾ ਕਹੋ।
+ਮੀਨੂ: ${_MENU}. ਅੱਜ ਰਾਤ: Shahi Lamb Chops ਖਾਸ ਕੀਮਤ। ${_LOC}`,
+
+  hi: `ज़रूरी: सिर्फ हिंदी में जवाब दो। हर जवाब देवनागरी में। अंग्रेजी बिल्कुल नहीं।
+टोन: गर्मजोश, स्वाभाविक, अपनापन — जैसे कोई अपना बोल रहा हो। बिल्कुल आम बोलचाल।
+नियम: ऑर्डर लो, पक्का करो, बंद करो। 1-2 लाइन।
+अच्छे जवाब: "बटर चिकन — नोट कर लिया! कुछ और?" / "हाँ जी! कुछ और?"
+ऑर्डर पूरा: "[items] — 20 मिनट में तैयार। Desi Road में मिलते हैं!"
+कीमत: सिर्फ पूछने पर। AI मत कहो।
+मेनू: ${_MENU}. आज रात: Shahi Lamb Chops खास कीमत। ${_LOC}`
+};
+
+function getPrompt() {
+  // Check if there's a recent order to add to
+  const recent = getRecentOrder();
+  const base   = PROMPTS[LANG] || PROMPTS.auto;
+  if (recent && recent.items.length > 0) {
+    const addOn = `\nACTIVE ORDER CONTEXT: Customer's recent order (placed ${Math.round((Date.now()-recent.time)/60000)} mins ago, ID ${recent.id}): ${recent.items.join(', ')}. If they want to add items, acknowledge this existing order naturally.`;
+    return base + addOn;
+  }
+  return base;
+}
+
+// ── OFFLINE FALLBACK ──────────────────────────────────────────────────────────
+const OFFLINE = [
+  { m:['butter chicken','bc cone'],           r:"Butter Chicken Cones — noted! Anything else?" },
+  { m:['lamb chop','lamb'],                   r:"Lamb Chops — added! Anything else?" },
+  { m:['naan','garlic naan'],                 r:"Garlic Naan — done! Anything else?" },
+  { m:['lassi','mango lassi'],                r:"Mango Lassi — added!" },
+  { m:['menu','kya hai','what do you have'],  r:"Butter Chicken Cones, Lamb Chops, Dal Makhani, Garlic Naan, Mango Lassi — what would you like?" },
+  { m:['confirm','pakka','done','theek','bas'],r:"Order confirmed! Ready in ~20 mins. See you at Desi Road! 🙏" },
+  { m:['halal'],                              r:"Yes, everything is halal!" },
+  { m:['price','how much','kitna'],           r:"Butter Chicken Cones $16.99 | Lamb Chops $29.99 | Naan $3.99 | Lassi $5.99" },
+  { m:['hour','open','timing'],               r:"Mon-Sat 11am-11pm, Sun 12pm-10pm" },
+  { m:['parking'],                            r:"Yes, plenty of parking!" },
+  { m:['hi','hello','hey','sat sri','namaste'],r:"Welcome to Desi Road! What would you like to order?" },
+];
+function getOfflineReply(text) {
+  const l = (text||'').toLowerCase();
+  for (const o of OFFLINE) { if (o.m.some(m => l.includes(m))) return o.r; }
+  return "Hi! Welcome to Desi Road. What would you like to order today?";
+}
+
+// ── BUBBLE HELPERS ────────────────────────────────────────────────────────────
+let typingInterval = null;
+function playTypingSound() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    let n = 0;
+    typingInterval = setInterval(() => {
+      if (n++>80) return;
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=800+Math.random()*400;o.type='square';
+      g.gain.setValueAtTime(0.012,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.04);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+0.04);
+    },90);
+  } catch(e) {}
+}
+function stopTypingSound() { if(typingInterval){clearInterval(typingInterval);typingInterval=null;} }
+
+function addMsg(side, text) {
+  const b = document.getElementById('chat-body');
+  const r = document.createElement('div');
+  r.className = 'mr' + (side==='ai'?' ai':'');
+  const bubble = document.createElement('div');
+  bubble.className = 'bb ' + (side==='ai'?'ai-gold':'usr');
+  bubble.textContent = text;
+  r.appendChild(bubble);
+  if (side==='ai') addSpeakerBtn(bubble, text);
+  b.appendChild(r);
+  b.scrollTop = b.scrollHeight;
+  requestAnimationFrame(() => r.classList.add('show'));
+  return bubble;
+}
+
+function showTyping() {
+  const b = document.getElementById('chat-body');
+  const r = document.createElement('div');
+  r.className = 'mr ai typ';
+  r.innerHTML = '<div class="bb ai-gold"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  b.appendChild(r); b.scrollTop = b.scrollHeight;
+  requestAnimationFrame(() => r.classList.add('show'));
+  return r;
+}
+function removeTyping() {
+  const t = document.querySelector('#chat-body .typ');
+  if (t) t.remove();
+}
+
+// ── PRICE STRIPPER ────────────────────────────────────────────────────────────
+function stripPrices(text) {
+  if (!text) return text;
+  if (/^[\w\s]+ ?[—\-–] ?\$[\d.]+\.?$/.test(text.trim())) return text;
+  return text.replace(/\$[\d]+\.?[\d]*/g,'').replace(/\bSubtotal:?.*$/gim,'').replace(/\bTotal:?.*$/gim,'').replace(/  +/g,' ').trim();
+}
+
+// ── MAIN CLAUDE CALL ──────────────────────────────────────────────────────────
+async function callClaude(messages) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const t    = setTimeout(() => ctrl.abort(), 20000);
+      const res  = await fetch('/api/claude', {
+        method: 'POST', signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 160,
+          system: getPrompt(),
+          messages
+        })
+      });
+      clearTimeout(t);
+      if (!res.ok) { if (attempt===3) throw new Error('HTTP '+res.status); await new Promise(r=>setTimeout(r,600*attempt)); continue; }
+      const data = await res.json();
+      const text = data.content?.[0]?.text || '';
+      if (!text) { if (attempt===3) throw new Error('Empty'); await new Promise(r=>setTimeout(r,600*attempt)); continue; }
+      return text;
+    } catch(e) {
+      if (attempt===3) throw e;
+      await new Promise(r => setTimeout(r, 600*attempt));
+    }
+  }
+}
+
+// ── MAIN SEND ─────────────────────────────────────────────────────────────────
+async function so() {
+  const inp = document.getElementById('chat-input');
+  const val = inp?.value.trim();
+  if (!val || TYPING) return;
+  inp.value = ''; TYPING = true;
+
+  addMsg('usr', val);
+
+  // Detect order items from user message
+  const newItems = detectOrderItems(val);
+  if (newItems.length > 0) {
+    currentOrderItems.push(...newItems);
+    updateOrderPanel();
+  }
+
+  // Check if completing order
+  const doneWords = ['confirm','pakka','done','theek','bas','that is all','that\'s all','ho gaya','pucca'];
+  const isConfirming = doneWords.some(w => val.toLowerCase().includes(w));
+
+  // Check for add-to-order intent
+  const addOrderWords = ['add to my order','just ordered','called earlier','add more','hor paao','aur dena'];
+  const isAdding = addOrderWords.some(w => val.toLowerCase().includes(w));
+  if (isAdding) {
+    const recent = getRecentOrder();
+    if (recent) {
+      // Show memory badge
+      const mb = document.getElementById('memory-badge');
+      const mt = document.getElementById('memory-text');
+      if (mb && mt) {
+        mt.textContent = `Previous order found: ${recent.items.join(', ')} (${Math.round((Date.now()-recent.time)/60000)} mins ago)`;
+        mb.style.display = 'flex';
+        // Restore previous items
+        recent.items.forEach(item => {
+          if (!currentOrderItems.includes(item)) currentOrderItems.push(item);
+        });
+        updateOrderPanel();
+      }
+    }
+  }
+
+  HISTORY.push({ role:'user', content:val });
+  if (HISTORY.length > 24) HISTORY.splice(0, 2);
+
+  const typingEl = showTyping();
+  playTypingSound();
+
+  try {
+    const reply = await callClaude(HISTORY);
+    removeTyping();
+    stopTypingSound();
+
+    const clean = stripPrices(reply.trim());
+    addMsg('ai', clean);
+    speak(clean);
+
+    HISTORY.push({ role:'assistant', content:clean });
+
+    // If order complete phrase detected
+    const orderDone = ['see you at desi road','ready in','mildette haan','milte hain','taiyar'].some(w => clean.toLowerCase().includes(w));
+    if (orderDone && currentOrderItems.length > 0 && !orderConfirmed) {
+      confirmOrder();
+    }
+
+    // Show confirm button if items exist
+    if (currentOrderItems.length > 0 && !orderConfirmed) {
+      document.getElementById('order-footer').style.display = 'block';
+    }
+
+    // Show returning customer memory on first exchange
+    if (HISTORY.length === 2 && !isAdding) {
+      const recent = getRecentOrder();
+      if (recent) {
+        const mb = document.getElementById('memory-badge');
+        const mt = document.getElementById('memory-text');
+        if (mb && mt) {
+          mt.textContent = `Welcome back! Last order: ${recent.items.join(', ')}`;
+          mb.style.display = 'flex';
+        }
+      }
+    }
+
+  } catch(e) {
+    removeTyping();
+    stopTypingSound();
+    const fallback = getOfflineReply(val);
+    addMsg('ai', fallback);
+    speak(fallback);
+    HISTORY.push({ role:'assistant', content:fallback });
+  }
+
+  TYPING = false;
+}
+
+function qm(text) {
+  const inp = document.getElementById('chat-input');
+  if (inp) { inp.value = text; so(); }
+}
+
+// ── WA MIC ────────────────────────────────────────────────────────────────────
+let waMicActive=false, waRec=null;
+function toggleWAMic(btn) {
+  if (waMicActive) { try{waRec?.stop()}catch(e){} waMicActive=false; btn.classList.remove('listening'); btn.innerHTML='🎤'; return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { document.getElementById('chat-input')?.focus(); return; }
+  waRec=new SR(); waRec.lang='en-IN'; waRec.continuous=false; waRec.interimResults=true;
+  waRec.onstart=()=>{waMicActive=true;btn.classList.add('listening');btn.innerHTML='⏹';};
+  waRec.onresult=(e)=>{
+    const inp=document.getElementById('chat-input');if(!inp)return;
+    inp.value=Array.from(e.results).map(r=>r[0].transcript).join('');
+    if(e.results[e.results.length-1].isFinal){waMicActive=false;btn.classList.remove('listening');btn.innerHTML='🎤';setTimeout(()=>so(),300);}
+  };
+  waRec.onerror=waRec.onend=()=>{waMicActive=false;btn.classList.remove('listening');btn.innerHTML='🎤';};
+  waRec.start();
+}
+
+// ── CALL DEMO ─────────────────────────────────────────────────────────────────
+let callActive=false, callRec=null, callHistory=[], callMicOn=false;
+const CALL_SYS=`You answer calls at Desi Road Brampton. NOT AI — a real warm local team member. Riya speaking.
+1-2 sentences max. Match caller's language exactly — Punjabi, Hindi, or English. Natural, warm, conversational.
+Take orders. Answer anything. Never restart if second person talks — continue the same order.
+If caller says they want to add to a previous order — acknowledge naturally and add items.
+MENU: Butter Chicken Cones, Shahi Lamb Chops, Dal Makhani, Raj Kachori, Garlic Naan, Mango Lassi
+HOURS: Mon-Sat 11am-11pm | LOCATION: 185 Fletchers Creek Blvd Brampton`;
+
+function startCallDemo() {
+  const modal=document.getElementById('call-modal'); if(!modal)return;
+  modal.style.display='flex'; callActive=true; callHistory=[];
+  document.getElementById('call-log').innerHTML='';
+  document.getElementById('call-log').style.display='none';
+  document.getElementById('call-ripple').style.display='none';
+  document.getElementById('call-icon').textContent='📱';
+  setCS('Dialling (289) 499-1000...','var(--mu)');
+  let d=0,a=setInterval(()=>{d=(d+1)%4;setCS('Dialling (289) 499-1000'+'...'.slice(0,d+1),'var(--mu)');},400);
+  setTimeout(()=>{clearInterval(a);setCS('🔔 Ringing...','var(--gold)');document.getElementById('call-icon').textContent='📳';},1800);
+  setTimeout(()=>{
+    setCS('Connected — Riya answering','var(--green)');
+    document.getElementById('call-log').style.display='block';
+    document.getElementById('call-icon').textContent='🔊';
+    callSpeak('Sat Sri Akal ji, Desi Road! Kiddan, ki chahida?');
+  },3200);
+}
+function endCall(){callActive=false;callMicOn=false;try{callRec?.stop()}catch(e){}if(currentAudio){currentAudio.pause();currentAudio=null;}document.getElementById('call-modal').style.display='none';}
+function setCS(msg,col){const s=document.getElementById('call-status');if(s){s.textContent=msg;s.style.color=col||'var(--green)';}}
+function addCallLog(text,role){
+  const log=document.getElementById('call-log');if(!log)return;
+  const d=document.createElement('div');
+  d.style.cssText=`margin-bottom:8px;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.6;background:${role==='ai'?'rgba(200,149,42,.1)':'rgba(255,255,255,.04)'};color:${role==='ai'?'var(--gold2)':'var(--cream2)'}`;
+  d.innerHTML=`<b style="font-size:10px;color:var(--mu);display:block">${role==='ai'?'RIYA — DESI ROAD':'YOU'}</b>${text}`;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+function callSpeak(text){
+  addCallLog(text,'ai');
+  document.getElementById('call-ripple').style.display='flex';
+  setCS('Riya speaking...','var(--gold)');
+  speak(text);
+  setTimeout(()=>{document.getElementById('call-ripple').style.display='none';if(callActive)setCS('Tap 🎤 to speak','var(--green)');},3500);
+}
+async function handleCallSpeech(text){
+  if(!text||!callActive)return;
+  addCallLog(text,'caller');setCS('...','var(--mu)');
+  callHistory.push({role:'user',content:text});if(callHistory.length>16)callHistory.splice(0,2);
+  try{
+    const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:100,system:CALL_SYS,messages:callHistory})});
+    const d=await r.json();const reply=d.content?.[0]?.text?.trim();
+    if(reply){callHistory.push({role:'assistant',content:reply});callSpeak(reply);}
+  }catch(e){setCS('Connection issue','#C03030');}
+}
+function toggleCallMic(){
+  if(!callActive)return;
+  const btn=document.getElementById('call-mic-btn');
+  if(callMicOn){try{callRec?.stop()}catch(e){}callMicOn=false;btn.style.background='linear-gradient(135deg,var(--gold),var(--gold2))';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){const t=prompt('Type what you want to say:');if(t)handleCallSpeech(t);return;}
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  callRec=new SR();callRec.lang='en-IN';callRec.continuous=false;callRec.interimResults=false;
+  callRec.onstart=()=>{callMicOn=true;setCS('🎤 Listening...','#FF8080');btn.style.background='linear-gradient(135deg,#C03030,#E04040)';document.getElementById('call-icon').textContent='🎤';};
+  callRec.onresult=(e)=>{const t=e.results[0][0].transcript;callMicOn=false;btn.style.background='linear-gradient(135deg,var(--gold),var(--gold2))';handleCallSpeech(t);};
+  callRec.onerror=()=>{callMicOn=false;btn.style.background='linear-gradient(135deg,var(--gold),var(--gold2))';const t=prompt('Mic unavailable — type:');if(t)handleCallSpeech(t);};
+  callRec.onend=()=>{callMicOn=false;};
+  callRec.start();
+}
+
+// ── ONLOAD ────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  // Preload voices
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+
+  // Show demo tab by default
+  S('demo', document.querySelector('.nb.c-gold'));
+
+  // Check for returning customer
+  const recent = getRecentOrder();
+  if (recent) {
+    setTimeout(() => {
+      const mb = document.getElementById('memory-badge');
+      const mt = document.getElementById('memory-text');
+      if (mb && mt) {
+        mt.textContent = `Welcome back! Last order: ${recent.items.join(', ')} — say "same again" to reorder`;
+        mb.style.display = 'flex';
+      }
+    }, 500);
+  }
+
+  // Enter key
+  document.getElementById('chat-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') so();
+  });
+
+  // Close call modal on backdrop click
+  document.getElementById('call-modal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('call-modal')) endCall();
+  });
+
+  // Greet with first message after short delay
+  setTimeout(() => {
+    const recent = getRecentOrder();
+    if (recent) {
+      addMsg('ai', `Welcome back! 🙏 Last time you had ${recent.items.join(', ')}. Same again or something new today?`);
+    } else {
+      addMsg('ai', 'Sat Sri Akal ji! 👋 Welcome to Desi Road. What would you like to order today?');
+    }
+  }, 600);
+};
+</script>
+</body>
+</html>
