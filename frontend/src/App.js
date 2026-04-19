@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ChatPanel from "@/components/ChatPanel";
@@ -25,6 +25,18 @@ function ZivioApp() {
   const currentAudioRef = useRef(null);
 
   const bt = BUSINESS_TEMPLATES[businessType] || BUSINESS_TEMPLATES.restaurant;
+
+  // Apply per-template theme (CSS custom properties) to :root so everything re-skins at once
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = bt.theme || {};
+    const touched = Object.keys(theme);
+    touched.forEach(k => root.style.setProperty(k, theme[k]));
+    return () => {
+      // Reset so next template doesn't inherit stale overrides
+      touched.forEach(k => root.style.removeProperty(k));
+    };
+  }, [bt]);
 
   const toggleSpeaker = useCallback(() => {
     setSpeakerOn(prev => {

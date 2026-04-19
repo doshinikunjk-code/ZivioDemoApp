@@ -105,6 +105,7 @@ def _build_voice_twiml(reply_text: str, audio_id: Optional[str], base_url: str, 
     voice, tw_lang = _POLLY_FALLBACK.get(lang, _POLLY_FALLBACK["en"])
     gather = (
         f'<Gather input="speech" speechTimeout="auto" speechModel="experimental_conversations" '
+        f'enhanced="true" profanityFilter="false" '
         f'language="{tw_lang}" hints="butter chicken, lamb chops, biryani, naan, lassi, '
         f'order, yes, no, confirm, pickup, delivery" '
         f'action="{gather_action}" method="POST">'

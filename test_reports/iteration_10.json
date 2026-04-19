@@ -1,0 +1,32 @@
+{
+  "summary": "Phase 10 — Ceremony Indian Cuisine template + dynamic upselling + chasing + enhanced IVR TwiML. All 13 new backend tests pass (test_zivio_phase10_ceremony.py). Frontend verified: 7th 'bts-ceremony' card renders with icon 🎉, clicking it swaps --gold to #EF6B2E, sidebar/topbar/subtitle all update to Ceremony. Theme correctly reverts to default #C8952A on restaurant switch. Content screens reflect Ceremony-specific features (Smart Upselling, Customer Chasing, 'cloned voice' compare row). Admin shows Voice IVR + /api/webhook/twilio/voice. Pricing $599 on every screen. VOICE_CLONE_SCRIPT.md contains all three language sections + ElevenLabs upload steps.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_zivio_phase10_ceremony.py",
+    "/app/test_reports/pytest/pytest_phase10_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Ceremony template theme { --gold: #EF6B2E, ... } applied via App.js useEffect is working correctly, and the cleanup function removes overrides so switching templates properly reverts to defaults — verified in browser.",
+    "build_system_prompt now has distinct DYNAMIC UPSELLING + CHASING blocks for both WhatsApp/chat and is_call paths; live LLM replies honor them (butter chicken → naan, biryani → lassi, paneer tikka → main-course nudge, 'umm let me think' → gentle chase, not generic 'how can I help').",
+    "routes/voice_ivr.py <Gather> now includes enhanced=\"true\" and profanityFilter=\"false\" as required — confirmed via direct POST to /api/webhook/twilio/voice returning TwiML.",
+    "Minor: ceremony template's problem/solution/flows copy is largely the same wording as the restaurant template (except some Ceremony-specific flavor). The distinctive phrase 'Celebrate the Taste of the India' lives only in topbar tagline + brand_tagline, not in the presentation screens. Consider weaving it into the eyebrow/title of Ceremony's Problem/Solution if stronger brand re-skin is desired — not blocking.",
+    "Minor: chat_sessions dict in core.py still unbounded — same observation as iteration_9. Not blocking."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_zivio_phase10_ceremony.py",
+    "/app/test_reports/pytest/pytest_phase10_results.xml",
+    "/app/test_reports/iteration_10.json"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 phase10) — /api/, /api/restaurant/default, /api/analytics/summary, /api/orders, /api/voice/status, /api/tts (MISS→HIT), /api/webhook/twilio/voice (TwiML with enhanced+profanityFilter), system prompt DYNAMIC UPSELLING+CHASING+human fillers, live chat upselling (naan/lassi/main), chase behavior — ALL GREEN",
+    "frontend": "100% on the checks run — 7-template grid includes bts-ceremony 🎉, click swaps --gold to #EF6B2E, sidebar brand='Ceremony Indian Cuisine', topbar tagline='Celebrate the Taste of the India', subtitle='CEREMONY INDIAN CUISINE — DEMO'. Restaurant click reverts --gold to #C8952A. Pricing $599 on features/compare/pricing. Admin shows Voice IVR + /api/webhook/twilio/voice URL. No console errors."
+  },
+  "test_credentials": "No auth required",
+  "seed_data_creation": "Applied restaurant template via Business Templates UI click to restore default after Ceremony swap (optional — each template-click does a PUT /api/restaurant/default).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 10 adds a 7th business template (ceremony) with its own theme object applied via CSS custom properties in App.js useEffect. All 6 prior templates still work and correctly reset --gold to #C8952A. Dynamic upselling + chasing enforced at the system-prompt level — verified by sending 'butter chicken' (→naan), 'chicken biryani' (→lassi), 'paneer tikka' (→main), 'umm let me think' (→chase). Voice IVR <Gather> now includes enhanced=\"true\" profanityFilter=\"false\" for better speech recognition. /app/VOICE_CLONE_SCRIPT.md contains English + Hindi + Punjabi sections + ElevenLabs upload instructions. Twilio creds still unchanged — in dev mode signature validation is SKIPPED with a WARNING (per iteration_9). ChatPanel TTS-dedupe was not re-measured in this run because the Playwright locator timed out after template-switch re-render; iteration_9 already validated it and the ChatPanel code was not modified in this phase.",
+  "rca_of_the_issue": "N/A — no bugs found. All requested features land cleanly."
+}

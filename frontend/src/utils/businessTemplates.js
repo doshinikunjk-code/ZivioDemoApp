@@ -527,6 +527,141 @@ export const BUSINESS_TEMPLATES = {
       pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
     },
   },
+
+  ceremony: {
+    type: 'ceremony',
+    icon: '🎉',
+    label: 'Ceremony Indian Cuisine',
+    theme: {
+      // Orange + cream + navy palette pulled from the restaurant's own menu card
+      '--gold': '#EF6B2E',
+      '--gold2': '#FF8A4C',
+      '--black': '#1A0D06',
+      '--dark': '#241508',
+      '--card': '#2F1C0C',
+      '--card2': '#3C2410',
+      '--brd': '#4A2D15',
+      '--brd2': '#5C3A1E',
+      '--green': '#1E2150',
+      '--green2': '#3A4080',
+    },
+    config: {
+      name: 'Ceremony Indian Cuisine',
+      tagline: 'Celebrate the Taste of the India',
+      city: 'Brampton',
+      phone: '(437) 331-5615',
+      location: 'Brampton, ON',
+      hours: 'Breakfast 8am-11am · Lunch & Dinner 11am-11pm',
+      brand_tagline: 'Celebrate the Taste of the India',
+      special_name: 'Non-veg Platter',
+      special_desc: '1 Leg, 1 Chicken Kebab, 2 Fish Pakora + more — $26.99',
+      monthly_price: '$599',
+      logo_url: '',
+      menu: [
+        // Signature non-veg
+        { name: 'Lamb Chops', price: 24.99, category: 'main' },
+        { name: 'Butter Chicken', price: 18.99, category: 'main' },
+        { name: 'Chicken Tikka Masala', price: 18.99, category: 'main' },
+        { name: 'Karahi Chicken', price: 18.99, category: 'main' },
+        { name: 'Goat Rogan Josh', price: 18.99, category: 'main' },
+        { name: 'Chicken Biryani', price: 14.99, category: 'main' },
+        { name: 'Goat Biryani', price: 14.99, category: 'main' },
+        { name: 'Tandoori Chicken Tikka Breast', price: 18.99, category: 'starter' },
+        { name: 'Malai Chicken Tikka', price: 17.99, category: 'starter' },
+        { name: 'Bihari Chicken Tikka', price: 17.99, category: 'starter' },
+        // Signature veg
+        { name: 'Paneer Tikka', price: 14.99, category: 'starter' },
+        { name: 'Shahi Paneer', price: 16.99, category: 'main' },
+        { name: 'Palak Paneer', price: 16.99, category: 'main' },
+        { name: 'Dal Makhani', price: 14.99, category: 'main' },
+        { name: 'Malai Kofta', price: 16.99, category: 'main' },
+        // Breakfast
+        { name: 'Chana Bhatura', price: 10.99, category: 'breakfast' },
+        { name: 'Amritsari Kulcha', price: 12.99, category: 'breakfast' },
+        { name: 'Aloo Paratha', price: 9.99, category: 'breakfast' },
+        // Chinese
+        { name: 'Chilli Chicken', price: 19.99, category: 'chinese' },
+        { name: 'Hakka Noodles', price: 12.99, category: 'chinese' },
+        // Breads
+        { name: 'Garlic Naan', price: 4.99, category: 'bread' },
+        { name: 'Butter Naan', price: 4.99, category: 'bread' },
+        { name: 'Lachha Paratha', price: 5.99, category: 'bread' },
+        // Drinks
+        { name: 'Mango Lassi', price: 4.99, category: 'drink' },
+        { name: 'Rose Lassi', price: 4.99, category: 'drink' },
+        { name: 'Masala Chai', price: 3.99, category: 'drink' },
+        // Desserts
+        { name: 'Gulab Jamun', price: 5.99, category: 'dessert' },
+        { name: 'Rasmalai', price: 5.99, category: 'dessert' },
+        { name: 'Kulfi Falooda', price: 10.99, category: 'dessert' },
+        // Platters
+        { name: 'Non-veg Platter', price: 26.99, category: 'platter' },
+        { name: 'Veg Platter', price: 23.99, category: 'platter' },
+      ],
+    },
+    quickMsgs: [
+      { text: 'Butter Chicken with Garlic Naan please', label: '🍛 Butter Chicken' },
+      { text: 'I want lamb chops and rice', label: '🍖 Lamb Chops' },
+      { text: 'Chana Bhathura for breakfast', label: '🫓 Breakfast' },
+      { text: 'What is on the menu?', label: '📋 Menu' },
+    ],
+    presentation: {
+      problem: {
+        eyebrow: 'Step 1 — The Opportunity',
+        title: ['is losing orders', 'every single night.'],
+        desc: 'When the phone rings at 10pm and the kitchen is busy. When a Punjabi family WhatsApps for a platter and gets no reply until morning. Every missed call is a missed celebration.',
+        stats: [
+          { value: '73%', label: 'Never call back if nobody answers first time', color: 'red' },
+          { value: '10pm', label: 'Peak hour when orders are lost to voicemail', color: 'gold' },
+          { value: '30%', label: 'Commission Uber Eats takes per order', color: 'red' },
+          { value: '$0', label: 'Revenue from missed calls and messages', color: 'gold' },
+        ],
+        flows: [
+          { icon: '📞', title: 'Phone rings at 10pm', desc: 'Staff are plating biryani. Nobody answers. Customer calls the next Indian restaurant.' },
+          { icon: '💬', title: 'WhatsApp at 9pm — no reply', desc: 'Family of 6 orders from Uber Eats instead. Uber keeps 30%.' },
+          { icon: '🗣️', title: 'Punjabi / Hindi customer messages', desc: 'No staff free to reply. Customer never hears back.' },
+        ],
+      },
+      solution: {
+        eyebrow: 'Step 2 — The Solution',
+        title: ['Every order. Every language.', 'Every hour.'],
+        desc: 'Your existing phone and WhatsApp — completely unchanged. Zivio AI handles everything silently behind it, 24/7 — in your own cloned voice.',
+        stats: [
+          { value: '24/7', label: 'Orders taken — even midnight and holidays', color: 'green' },
+          { value: '3', label: 'Languages auto-detected', color: 'gold' },
+          { value: '20+', label: 'Simultaneous conversations', color: 'green' },
+          { value: '$0', label: 'Commission per order', color: 'gold' },
+        ],
+        flows: [
+          { num: '1', title: 'Customer calls or texts Ceremony', desc: 'Same number. Nothing changes for the customer.' },
+          { num: '2', title: 'AI detects language, answers in your cloned voice', desc: 'Punjabi, Hindi, English — matched naturally.' },
+          { num: '3', title: 'Takes the full order with smart upsells', desc: 'Suggests Lassi with Biryani, Naan with Butter Chicken — based on the order.' },
+          { num: '4', title: 'Kitchen gets the ticket in 3 seconds', desc: 'Full formatted order via WhatsApp.' },
+        ],
+      },
+      features: [
+        { icon: '📞', title: '24/7 Phone Ordering', desc: 'AI answers in 2 rings in your cloned voice. Takes full order, confirms.', tag: 'Voice AI' },
+        { icon: '💬', title: 'WhatsApp Ordering', desc: 'On your existing number.', tag: 'Existing Number' },
+        { icon: '🗣️', title: '3 Languages Auto-detect', desc: 'English, Punjabi, Hindi + code-switching.', tag: 'Multilingual' },
+        { icon: '🧠', title: 'Smart Upselling', desc: 'AI pairs dishes contextually — Naan with curries, Lassi with biryani.', tag: 'Revenue+' },
+        { icon: '👋', title: 'Customer Chasing', desc: 'Gently follows up if a customer hesitates — closes more orders.', tag: 'Conversion' },
+        { icon: '🔔', title: 'Instant Kitchen Alerts', desc: 'Every order to your team in 3 seconds.', tag: 'Real-time' },
+        { icon: '⭐', title: 'Review Automation', desc: 'Happy customer → review request. Unhappy → owner alert.', tag: 'Reputation' },
+      ],
+      compare: {
+        competitors: ['Uber Eats', 'DoorDash'],
+        rows: [
+          ['Monthly fee', '$0', '$0', '$599 flat'],
+          ['Commission per order', '25–35%', '25–30%', '0%'],
+          ['You own the customer', '✗', '✗', '✓'],
+          ['Multilingual support', '✗', '✗', '✓'],
+          ['Your own cloned voice', '✗', '✗', '✓'],
+          ['24/7 ordering', '✗', '✗', '✓'],
+        ],
+      },
+      pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
+    },
+  },
 };
 
 export const BUSINESS_TYPE_LIST = Object.values(BUSINESS_TEMPLATES);
