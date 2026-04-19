@@ -1,34 +1,15 @@
-# Zivio AI - Desi Road Ordering System PRD
+# Zivio AI PRD
 
-## Original Problem Statement
-Voice AI ordering demo for Desi Road restaurant, Brampton. Indian accent, Hindi/Punjabi/English, background noise handling, human touch, professional pitch for hotels.
+## Implemented (All 4 Phases - 100% test pass across all)
 
-## Architecture
-- **Backend**: FastAPI + emergentintegrations (Claude Haiku 4.5) + httpx (ElevenLabs TTS) + Twilio (WhatsApp)
-- **Frontend**: React + custom CSS dark/gold theme
-- **Database**: MongoDB (restaurants, orders, analytics)
-- **Voice**: ElevenLabs paid plan, Riya Rao voice, 1.05x playback
+### Phase 1: Core MVP - React + FastAPI, Claude AI chat, ElevenLabs TTS, noise filtering, 8 screens
+### Phase 2: Business - Admin panel, Twilio WhatsApp, kitchen/reception alerts, Google Review, analytics
+### Phase 3: Polish - Custom demo bar, reduced ji, Emergent badge hidden
+### Phase 4: Voice Fix - Removed "ji/hey" TTS primer, stability 0.50 (no more breaks), natural AI prompt (no fillers), Hindi/Punjabi tabs produce correct script, 1.05x playback, echo fix
 
-## What's Been Implemented
+## Known Limitation
+- ElevenLabs does not natively support Punjabi (Gurmukhi) pronunciation — text shown correctly but voice may read phonetically
 
-### Phase 1: Core MVP
-- React + FastAPI rebuild, Claude AI chat, ElevenLabs TTS, background noise filtering, order detection, 8 presentation screens, demo call modal
-
-### Phase 2: Business Features
-- Restaurant config admin panel, Twilio WhatsApp ready-to-connect, kitchen/reception alerts, Google Review automation, analytics dashboard, order persistence in MongoDB
-
-### Phase 3: Polish & Custom Demo
-- Reduced "ji" overuse — AI sounds natural and human
-- Faster voice (1.05x playback speed)
-- Fixed echo/double voiceover — single audio stream guaranteed
-- Removed Emergent badge
-- "Try with YOUR Restaurant" custom demo bar — hotel owners type name, AI adapts instantly
-
-## Test Results: 100% across all phases
-- Phase 1: 11/11 backend, all frontend
-- Phase 2: 15/15 backend, all frontend
-- Phase 3: 7/7 backend, all frontend
-
-## Prioritized Backlog
-### P1: Connect Twilio creds, add voice IVR, multi-tenant support
-### P2: Daily campaign scheduler, loyalty tracking, WebSocket order updates, revenue charts
+## Backlog
+- P1: Connect Twilio creds, voice IVR, multi-tenant
+- P2: Campaign scheduler, loyalty, WebSocket updates, revenue charts
