@@ -28,25 +28,25 @@ TEMPLATES = {
     'pharmacy': {
         'name': 'MedCare Pharmacy',
         'tagline': 'Your Neighbourhood Pharmacy',
-        'monthly_price': '$499',
+        'monthly_price': '$599',
         'brand_tagline': 'Care Beyond the Counter',
     },
     'doctor': {
         'name': 'CarePlus Medical Clinic',
         'tagline': 'Family Medicine & Walk-In',
-        'monthly_price': '$699',
+        'monthly_price': '$599',
         'brand_tagline': 'Healthcare That Listens',
     },
     'trades': {
         'name': 'ProFix Home Services',
         'tagline': 'Plumbing, Electrical & HVAC',
-        'monthly_price': '$499',
+        'monthly_price': '$599',
         'brand_tagline': 'We Fix It Right',
     },
     'restaurant': {
         'name': 'Desi Road Restaurant',
         'tagline': 'Elevated Indian Cuisine',
-        'monthly_price': '$799',
+        'monthly_price': '$599',
         'brand_tagline': 'Desi Daru Desi Khana',
     },
 }
@@ -275,7 +275,7 @@ class TestCleanup:
             'brand_tagline': 'Desi Daru Desi Khana',
             'special_name': 'Shahi Lamb Chops',
             'special_desc': 'discounted price tonight',
-            'monthly_price': '$799',
+            'monthly_price': '$599',
             'menu': [
                 {'name': 'Butter Chicken Cones', 'price': 16.99, 'category': 'main'},
                 {'name': 'Shahi Lamb Chops', 'price': 29.99, 'category': 'main'},
