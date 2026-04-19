@@ -178,7 +178,7 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
       setShowLog(true);
       setCallIcon('🔊');
       setConnected(true);
-      callSpeak('Sat Sri Akal ji, Desi Road! Kiddan, ki chahida?');
+      callSpeak('Hey, Desi Road! What can I get you today?');
     }, 3200);
 
     return () => {

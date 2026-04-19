@@ -326,12 +326,12 @@ export default function ChatPanel({
       const recent = getRecentOrder();
       setTimeout(() => {
         if (recent) {
-          const greeting = `Welcome back! Last time you had ${recent.items.join(', ')}. Same again or something new?`;
+          const greeting = `Hey! Welcome back. Last time you had ${recent.items.join(', ')}. Same again or something new?`;
           addMessage('ai', greeting);
           speak(greeting);
           setMemoryText(`Welcome back! Last order: ${recent.items.join(', ')}`);
         } else {
-          const greeting = 'Sat Sri Akal! Welcome to Desi Road. What can I get you today?';
+          const greeting = 'Hey! Welcome to Desi Road. What can I get you?';
           addMessage('ai', greeting);
           speak(greeting);
         }
