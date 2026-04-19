@@ -88,6 +88,7 @@ class TTSRequest(BaseModel):
     text: str
     voice_id: Optional[str] = None
     lang: Optional[str] = 'auto'
+    restaurant_id: Optional[str] = 'default'
 
 class WhatsAppMessage(BaseModel):
     to: str
@@ -309,6 +310,15 @@ async def tts_endpoint(req: TTSRequest):
     try:
         text = req.text
         voice_id = req.voice_id or EL_DEFAULT_VOICE
+
+        # Check for language-specific voice from restaurant config
+        if req.restaurant_id and req.lang and req.lang != 'auto':
+            config = await db.restaurants.find_one({"id": req.restaurant_id}, {"_id": 0})
+            if config:
+                voice_map = config.get("voice_ids", {})
+                if req.lang in voice_map and voice_map[req.lang]:
+                    voice_id = voice_map[req.lang]
+
         clean = re.sub(r'[\U0001F300-\U0001FFFF]', '', text)
         clean = re.sub(r'[—]', ', ', clean)
         clean = re.sub(r'[•\n]', ' ', clean)

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Save, Plus, Trash2, Send, TestTube, Loader2 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
+const EL_DEFAULT_VOICE = 'mActWQg9kibLro6Z2ouY';
 
 export default function AdminPanel() {
   const [config, setConfig] = useState(null);
@@ -208,6 +209,30 @@ export default function AdminPanel() {
         <div className="admin-test-btns">
           <button className="tbtn green" onClick={testKitchenAlert} data-testid="test-kitchen-btn"><TestTube size={12} /> Test Kitchen Alert</button>
           <button className="tbtn green" onClick={testReceptionAlert} data-testid="test-reception-btn"><TestTube size={12} /> Test Reception Alert</button>
+        </div>
+      </div>
+
+      {/* VOICE CONFIGURATION */}
+      <div className="admin-section">
+        <div className="admin-section-title">Voice Configuration (ElevenLabs)</div>
+        <div className="ph-s" style={{ marginBottom: 12, fontSize: 12, maxWidth: 'none' }}>Set different voice IDs per language. Default voice is used when no language-specific voice is set. To clone a Punjabi voice: go to elevenlabs.io → Voice Lab → Instant Clone → record 30 seconds of Punjabi speech.</div>
+        <div className="admin-grid">
+          <div className="admin-field">
+            <label>Default Voice ID</label>
+            <input value={EL_DEFAULT_VOICE} disabled style={{ opacity: 0.6 }} />
+          </div>
+          <div className="admin-field">
+            <label>English Voice ID (optional)</label>
+            <input value={(config.voice_ids || {}).en || ''} onChange={e => updateField('voice_ids', { ...(config.voice_ids || {}), en: e.target.value })} placeholder="Use default" data-testid="admin-voice-en" />
+          </div>
+          <div className="admin-field">
+            <label>Hindi Voice ID (optional)</label>
+            <input value={(config.voice_ids || {}).hi || ''} onChange={e => updateField('voice_ids', { ...(config.voice_ids || {}), hi: e.target.value })} placeholder="Use default" data-testid="admin-voice-hi" />
+          </div>
+          <div className="admin-field">
+            <label>Punjabi Voice ID (optional)</label>
+            <input value={(config.voice_ids || {}).pa || ''} onChange={e => updateField('voice_ids', { ...(config.voice_ids || {}), pa: e.target.value })} placeholder="Clone a Punjabi voice at elevenlabs.io" data-testid="admin-voice-pa" />
+          </div>
         </div>
       </div>
 

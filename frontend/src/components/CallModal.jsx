@@ -193,7 +193,7 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
       <div className="call-box">
         <div className="call-icon">{callIcon}</div>
         <div className="call-title">Desi Road AI</div>
-        <div className="call-subtitle">(289) 499-1000 · Powered by Zivio</div>
+        <div className="call-subtitle">(437) 331-5615 · Powered by Zivio</div>
         <div className="call-status" style={{ color: statusColor }} data-testid="call-status">{status}</div>
 
         {showRipple && (

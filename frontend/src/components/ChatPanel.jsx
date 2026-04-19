@@ -71,7 +71,7 @@ export default function ChatPanel({
       const r = await fetch(`${API}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: clean, lang })
+        body: JSON.stringify({ text: clean, lang, restaurant_id: 'default' })
       });
       if (!r.ok) throw new Error('TTS failed');
       const blob = await r.blob();
@@ -349,7 +349,7 @@ export default function ChatPanel({
         </div>
         <div>
           <div className="cn">Desi Road</div>
-          <div className="cst">Zivio AI — (289) 499-1000</div>
+          <div className="cst">Zivio AI — (437) 331-5615</div>
         </div>
         <div className="lang-badge" data-testid="lang-badge">{LANG_LABELS[lang]}</div>
         <button className="tbtn" style={{ marginLeft: 8, fontSize: 10, padding: '4px 10px' }} data-testid="chat-speaker-toggle" onClick={toggleSpeaker}>

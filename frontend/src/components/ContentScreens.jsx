@@ -50,7 +50,7 @@ function SolutionScreen({ onNavigate }) {
       </div>
       <div className="sd">How it works at Desi Road</div>
       <div className="flow">
-        <FlowItem num="1" title="Customer contacts Desi Road — same number as always" desc="WhatsApp or phone on (289) 499-1000. Nothing changes for the customer." />
+        <FlowItem num="1" title="Customer contacts Desi Road — same number as always" desc="WhatsApp or phone on (437) 331-5615. Nothing changes for the customer." />
         <FlowItem num="2" title="AI detects language and responds instantly" desc="Punjabi → Punjabi. Hindi → Hindi. English → English. Mixed → matched naturally." />
         <FlowItem num="3" title="Takes the full order and confirms" desc="Remembers returning customers. Family can add items freely." />
         <FlowItem num="4" title="Order goes to kitchen instantly" desc="Full formatted ticket sent to kitchen phone or receipt printer." />
@@ -168,7 +168,7 @@ function PricingScreen() {
         <ul className="price-items">
           <li>Full setup and configuration — included free</li>
           <li>WhatsApp on Desi Road's existing number</li>
-          <li>24/7 phone voice agent on (289) 499-1000</li>
+          <li>24/7 phone voice agent on (437) 331-5615</li>
           <li>English + Punjabi + Hindi + code-switching</li>
           <li>Customer memory + returning customer recognition</li>
           <li>Add-to-existing-order within 60 minutes</li>
