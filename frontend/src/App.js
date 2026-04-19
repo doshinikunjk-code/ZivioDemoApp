@@ -153,6 +153,8 @@ function ZivioApp() {
                   orderConfirmed={orderConfirmed}
                   setOrderConfirmed={setOrderConfirmed}
                   setOrderData={setOrderData}
+                  businessConfig={bt.config}
+                  businessQuickMsgs={bt.quickMsgs}
                 />
                 <OrderPanel
                   orderItems={orderItems}
@@ -177,7 +179,7 @@ function ZivioApp() {
       </div>
 
       {showCallModal && (
-        <CallModal onClose={() => setShowCallModal(false)} speakerOn={speakerOn} currentAudioRef={currentAudioRef} />
+        <CallModal onClose={() => setShowCallModal(false)} speakerOn={speakerOn} currentAudioRef={currentAudioRef} businessConfig={bt.config} />
       )}
     </div>
   );

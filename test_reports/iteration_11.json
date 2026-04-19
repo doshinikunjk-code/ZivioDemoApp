@@ -1,0 +1,32 @@
+{
+  "summary": "Phase 11 — Strict language override in /api/chat + template-aware ChatPanel/CallModal props. Backend: 10/10 new tests pass in test_zivio_phase11_lang_override.py (Hindi/Punjabi/English STRICT OVERRIDE on conflicting user language, auto-detect regression, multi-turn session continuity, upsell suggestion, chase behavior, restaurant GET health). Frontend: verified Ceremony/Dentist/Pharmacy template swaps correctly rebrand ChatPanel header + greeting, Hindi lang-tab enforces Devanagari reply end-to-end through UI, Demo Call modal shows correct template name + phone and AI greets with that template's name ('Hey, thanks for calling Ceremony Indian Cuisine! This is Riya...').",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_zivio_phase11_lang_override.py",
+    "/app/test_reports/pytest/pytest_phase11_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "STRICT OVERRIDE lang prefix (routes/chat.py) is effective — verified live: user typed English 'I want butter chicken please' with lang='hi' → reply 'बटर चिकन, बहुत अच्छा! लच्छा पराठा या नान लेंगे इसके साथ?' (Devanagari). Same works for pa/Gurmukhi and for en override when user types Hindi.",
+    "ChatPanel correctly consumes businessConfig + businessQuickMsgs props; header name/phone/logo + greeting templates (GREETINGS{auto,en,hi,pa}) all parametrize by restaurantName — verified across restaurant, ceremony, dentist, pharmacy.",
+    "CallModal correctly consumes businessConfig — title shows '<Template Name> AI', subtitle shows phone, AI greets with template name via ElevenLabs TTS. IMPORTANT caveat: businessType state in App.js is NOT persisted, so a page reload always reverts to 'restaurant'. First call-modal test run hit this after a page.reload() — not a bug, just a behavior to note.",
+    "Greeting fires ONCE per ChatPanel mount (greetingSentRef). Users who click a lang tab AFTER greeting fires will see mixed-language state (English greeting but subsequent replies in chosen language). This is documented in review_request but could be UX-polished by re-rendering greeting when lang changes pre-first-user-message.",
+    "Minor: chat_sessions is still an unbounded in-memory dict (core.py) — same observation from iterations 9 & 10. Not blocking but will leak memory in long-running production deployments."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_zivio_phase11_lang_override.py",
+    "/app/test_reports/pytest/pytest_phase11_results.xml",
+    "/app/test_reports/iteration_11.json"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 phase11) — lang='hi' enforces Devanagari, lang='pa' enforces Gurmukhi, lang='en' enforces English even when user types Hindi, auto-detect still works, multi-turn session continuity works, upsell and chase behaviors intact, /api/restaurant/default + /api/ health OK",
+    "frontend": "100% on checks run — Ceremony header shows 'Ceremony Indian Cuisine' + phone, greeting bubble says 'Welcome to Ceremony Indian Cuisine', Hindi tab enforces Devanagari reply (verified bubble contains बटर चिकन/नान), CallModal title='Ceremony Indian Cuisine AI', in-call AI greeting='Hey, thanks for calling Ceremony Indian Cuisine! This is Riya...', other templates (Dentist→Bright Smile Dental, Pharmacy→MedCare Pharmacy) also re-brand correctly"
+  },
+  "test_credentials": "No auth required — /app/memory/test_credentials.md not applicable",
+  "seed_data_creation": "None. Restaurant PUT happens automatically when a template card is clicked.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 11 closes the user-reported issues from Phase 10: (a) ChatPanel + CallModal now correctly receive businessConfig/businessQuickMsgs props from App.js and re-skin on template switch, (b) /api/chat has STRICT OVERRIDE prefix that forces the LLM to reply in the pinned language regardless of user input language. Mic/speech-recognition portion of CallModal was NOT tested headlessly — Playwright can't grant real mic permission; code has typing-fallback via window.prompt on SR unavailable or error. Note: ChatPanel greeting fires only once per mount via greetingSentRef, so language-switch greeting changes require reload or first-user-message flow. businessType state in App.js is session-only (not persisted to localStorage), so reload reverts to 'restaurant' default.",
+  "rca_of_the_issue": "N/A — no bugs found in this iteration. Previous user-reported issues (hardcoded 'Desi Road', Hindi tab not enforcing Hindi reply) are fixed and verified via both backend pytest and live UI automation."
+}

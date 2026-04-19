@@ -4,7 +4,7 @@ import { detectOrderItems, getOfflineReply, stripPrices, ORDER_COMPLETE_PHRASES,
 import { startVAD } from '@/utils/vad';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
-const DESI_ROAD_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
+const DEFAULT_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
 const LANG_LABELS = { auto: '🔄 Auto', en: '🇨🇦 EN', pa: '🇮🇳 PA', hi: '🇮🇳 HI' };
 const LANG_TABS = [
   { id: 'auto', label: '🔄 Auto-detect' },
@@ -13,13 +13,21 @@ const LANG_TABS = [
   { id: 'hi', label: '🇮🇳 हिन्दी' },
 ];
 
-const QUICK_MSGS = [
+const DEFAULT_QUICK_MSGS = [
   { text: 'Butter Chicken Cones chahida', label: '🍛 Butter Chicken' },
   { text: 'Lamb Chops please', label: '🍖 Lamb Chops' },
   { text: 'What is the menu?', label: '📋 Menu' },
   { text: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ', label: '🙏 ਸਤ ਸ੍ਰੀ ਅਕਾਲ' },
   { text: 'नमस्ते', label: '🙏 नमस्ते' },
 ];
+
+// Lang-specific greeting templates — parameterized by restaurant name
+const GREETINGS = {
+  auto: (name) => `Hey! Welcome to ${name}. What can I get you?`,
+  en:   (name) => `Hey! Welcome to ${name}. What can I get you?`,
+  hi:   (name) => `नमस्ते! ${name} में आपका स्वागत है। क्या ऑर्डर करना चाहेंगे?`,
+  pa:   (name) => `ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ${name} ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ। ਕੀ ਚਾਹੀਦਾ ਹੈ?`,
+};
 
 const MIN_CONFIDENCE = 0.55;
 const MIN_WORDS = 1;
@@ -28,8 +36,15 @@ const NOISE_FLOOR_CEILING = 0.08; // if ambient is this loud we warn user — li
 
 export default function ChatPanel({
   speakerOn, toggleSpeaker, currentAudioRef,
-  orderItems, setOrderItems, orderConfirmed, setOrderConfirmed, setOrderData
+  orderItems, setOrderItems, orderConfirmed, setOrderConfirmed, setOrderData,
+  businessConfig, businessQuickMsgs
 }) {
+  const config = businessConfig || {};
+  const restaurantName = config.name || 'Desi Road';
+  const restaurantPhone = config.phone || '(437) 331-5615';
+  const restaurantLogo = config.logo_url || DEFAULT_LOGO;
+  const quickMsgs = businessQuickMsgs && businessQuickMsgs.length ? businessQuickMsgs : DEFAULT_QUICK_MSGS;
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -414,12 +429,13 @@ export default function ChatPanel({
       const recent = getRecentOrder();
       setTimeout(() => {
         if (recent) {
-          const greeting = `Hey! Welcome back. Last time you had ${recent.items.join(', ')}. Same again or something new?`;
+          const greeting = `Hey! Welcome back to ${restaurantName}. Last time you had ${recent.items.join(', ')}. Same again or something new?`;
           addMessage('ai', greeting);
           speak(greeting);
           setMemoryText(`Welcome back! Last order: ${recent.items.join(', ')}`);
         } else {
-          const greeting = 'Hey! Welcome to Desi Road. What can I get you?';
+          const greetFn = GREETINGS[lang] || GREETINGS.auto;
+          const greeting = greetFn(restaurantName);
           addMessage('ai', greeting);
           speak(greeting);
         }
@@ -432,12 +448,12 @@ export default function ChatPanel({
       {/* HEADER */}
       <div className="chd">
         <div className="av">
-          <img src={DESI_ROAD_LOGO} alt="DR" onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-          <div className="av-text" style={{ display: 'none' }}>DR</div>
+          <img src={restaurantLogo} alt={restaurantName} onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+          <div className="av-text" style={{ display: 'none' }}>{restaurantName.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
         </div>
         <div>
-          <div className="cn">Desi Road</div>
-          <div className="cst">Zivio AI — (437) 331-5615</div>
+          <div className="cn">{restaurantName}</div>
+          <div className="cst">Zivio AI — {restaurantPhone}</div>
         </div>
         <div className="lang-badge" data-testid="lang-badge">{LANG_LABELS[lang]}</div>
         <button className="tbtn" style={{ marginLeft: 8, fontSize: 10, padding: '4px 10px' }} data-testid="chat-speaker-toggle" onClick={toggleSpeaker}>
@@ -491,7 +507,7 @@ export default function ChatPanel({
 
       {/* QUICK SUGGESTIONS */}
       <div className="qs" data-testid="quick-suggestions">
-        {QUICK_MSGS.map((q, i) => (
+        {quickMsgs.map((q, i) => (
           <button key={i} className="qb" data-testid={`quick-msg-${i}`} onClick={() => handleQuickMsg(q.text)}>
             {q.label}
           </button>

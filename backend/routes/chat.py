@@ -19,13 +19,13 @@ async def chat_endpoint(req: ChatRequest):
             config = await db.restaurants.find_one({"id": "default"}, {"_id": 0})
 
         lang_map = {
-            "en": "Reply ONLY in English.",
-            "pa": "Reply ONLY in Punjabi (Gurmukhi script). No English.",
-            "hi": "Reply ONLY in Hindi (Devanagari script). No English.",
+            "en": "STRICT OVERRIDE: Regardless of the language this message is typed in, you MUST reply ONLY in natural spoken English. The user has pinned the English tab. Do not reply in Hindi or Punjabi.",
+            "pa": "STRICT OVERRIDE: Regardless of the language this message is typed in, you MUST reply ONLY in Punjabi using Gurmukhi script (ਪੰਜਾਬੀ). Every single word in Punjabi. No English. No Hindi. The user has pinned the Punjabi tab.",
+            "hi": "STRICT OVERRIDE: Regardless of the language this message is typed in, you MUST reply ONLY in Hindi using Devanagari script (हिन्दी). Every single word in Hindi. No English. No Punjabi. The user has pinned the Hindi tab.",
         }
         lang_context = lang_map.get(req.lang, "") if (req.lang and req.lang != "auto") else ""
         if lang_context:
-            msg = f"[Language instruction: {lang_context}]\n{msg}"
+            msg = f"[{lang_context}]\n{msg}"
         if req.context:
             msg = f"[Order context: {req.context}]\n{msg}"
 

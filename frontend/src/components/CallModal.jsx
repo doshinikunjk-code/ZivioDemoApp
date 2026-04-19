@@ -3,7 +3,11 @@ import { Mic, MicOff, PhoneOff, Phone } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
-export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
+export default function CallModal({ onClose, speakerOn, currentAudioRef, businessConfig }) {
+  const config = businessConfig || {};
+  const restaurantName = config.name || 'Desi Road';
+  const restaurantPhone = config.phone || '(437) 331-5615';
+
   const [status, setStatus] = useState('');
   const [statusColor, setStatusColor] = useState('var(--mu)');
   const [showRipple, setShowRipple] = useState(false);
@@ -161,10 +165,10 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
   useEffect(() => {
     let d = 0;
     setCallIcon('📱');
-    setCS('Dialling (289) 499-1000...', 'var(--mu)');
+    setCS(`Dialling ${restaurantPhone}...`, 'var(--mu)');
     const dialInterval = setInterval(() => {
       d = (d + 1) % 4;
-      setCS('Dialling (289) 499-1000' + '...'.slice(0, d + 1), 'var(--mu)');
+      setCS(`Dialling ${restaurantPhone}` + '...'.slice(0, d + 1), 'var(--mu)');
     }, 400);
 
     const ringTimeout = setTimeout(() => {
@@ -178,7 +182,7 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
       setShowLog(true);
       setCallIcon('🔊');
       setConnected(true);
-      callSpeak('Hey, Desi Road! What can I get you today?');
+      callSpeak(`Hey, thanks for calling ${restaurantName}! This is Riya. What can I get started for you today?`);
     }, 3200);
 
     return () => {
@@ -192,8 +196,8 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
     <div className="call-modal" data-testid="call-modal" onClick={(e) => { if (e.target === e.currentTarget) endCall(); }}>
       <div className="call-box">
         <div className="call-icon">{callIcon}</div>
-        <div className="call-title">Desi Road AI</div>
-        <div className="call-subtitle">(437) 331-5615 · Powered by Zivio</div>
+        <div className="call-title">{restaurantName} AI</div>
+        <div className="call-subtitle">{restaurantPhone} · Powered by Zivio</div>
         <div className="call-status" style={{ color: statusColor }} data-testid="call-status">{status}</div>
 
         {showRipple && (
@@ -206,7 +210,7 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
           <div className="call-log" data-testid="call-log">
             {logs.map(l => (
               <div key={l.id} className={`call-log-entry ${l.role === 'ai' ? 'ai' : 'caller'}`}>
-                <span className="label">{l.role === 'ai' ? 'RIYA — DESI ROAD' : 'YOU'}</span>
+                <span className="label">{l.role === 'ai' ? `RIYA — ${restaurantName.toUpperCase()}` : 'YOU'}</span>
                 {l.text}
               </div>
             ))}
