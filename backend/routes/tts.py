@@ -22,6 +22,102 @@ _EMOJI_RE = re.compile(r"[\U0001F300-\U0001FFFF]")
 _VS_RE = re.compile(r"[\U0000FE00-\U0000FE0F]")
 _ZWJ_RE = re.compile(r"[\U0000200D]")
 
+# Pronunciation-preservation dictionary — when replying in Hindi/Punjabi, any
+# Latin-script menu word that leaks through gets normalized to native script so
+# ElevenLabs pronounces it with the cloned voice's natural Hindi/Punjabi rhythm
+# (not a flat English-accented reading). Applied case-insensitively.
+_HI_MAP = {
+    "butter chicken": "बटर चिकन",
+    "garlic naan": "गार्लिक नान",
+    "butter naan": "बटर नान",
+    "lamb chops": "लैम्ब चॉप्स",
+    "mango lassi": "मैंगो लस्सी",
+    "rose lassi": "रोज़ लस्सी",
+    "chicken biryani": "चिकन बिरयानी",
+    "goat biryani": "बकरे की बिरयानी",
+    "veg biryani": "वेज बिरयानी",
+    "chicken tikka masala": "चिकन टिक्का मसाला",
+    "paneer tikka masala": "पनीर टिक्का मसाला",
+    "karahi chicken": "कढ़ाई चिकन",
+    "shahi paneer": "शाही पनीर",
+    "palak paneer": "पालक पनीर",
+    "dal makhani": "दाल मखनी",
+    "chana bhatura": "छोले भटूरे",
+    "gulab jamun": "गुलाब जामुन",
+    "kulfi falooda": "कुल्फी फालूदा",
+    "rasmalai": "रसमलाई",
+    "tandoori chicken": "तंदूरी चिकन",
+    "malai chicken tikka": "मलाई चिकन टिक्का",
+    "ceremony indian cuisine": "सेरेमनी इंडियन कुज़ीन",
+    "ceremony": "सेरेमनी",
+    "desi road": "देसी रोड",
+    "riya": "रिया",
+    "biryani": "बिरयानी",
+    "naan": "नान",
+    "lassi": "लस्सी",
+    "tikka": "टिक्का",
+    "paneer": "पनीर",
+    "chicken": "चिकन",
+    "roti": "रोटी",
+    "paratha": "पराठा",
+}
+_PA_MAP = {
+    "butter chicken": "ਬਟਰ ਚਿਕਨ",
+    "garlic naan": "ਗਾਰਲਿਕ ਨਾਨ",
+    "butter naan": "ਬਟਰ ਨਾਨ",
+    "lamb chops": "ਲੈਂਬ ਚੌਪਸ",
+    "mango lassi": "ਮੈਂਗੋ ਲੱਸੀ",
+    "rose lassi": "ਰੋਜ਼ ਲੱਸੀ",
+    "chicken biryani": "ਚਿਕਨ ਬਿਰਯਾਨੀ",
+    "goat biryani": "ਬੱਕਰੇ ਦੀ ਬਿਰਯਾਨੀ",
+    "chicken tikka masala": "ਚਿਕਨ ਟਿੱਕਾ ਮਸਾਲਾ",
+    "paneer tikka masala": "ਪਨੀਰ ਟਿੱਕਾ ਮਸਾਲਾ",
+    "karahi chicken": "ਕੜਾਹੀ ਚਿਕਨ",
+    "shahi paneer": "ਸ਼ਾਹੀ ਪਨੀਰ",
+    "palak paneer": "ਪਾਲਕ ਪਨੀਰ",
+    "dal makhani": "ਦਾਲ ਮੱਖਣੀ",
+    "chana bhatura": "ਛੋਲੇ ਭਟੂਰੇ",
+    "gulab jamun": "ਗੁਲਾਬ ਜਾਮੁਨ",
+    "kulfi falooda": "ਕੁਲਫ਼ੀ ਫਲੂਦਾ",
+    "rasmalai": "ਰਸਮਲਾਈ",
+    "tandoori chicken": "ਤੰਦੂਰੀ ਚਿਕਨ",
+    "malai chicken tikka": "ਮਲਾਈ ਚਿਕਨ ਟਿੱਕਾ",
+    "ceremony indian cuisine": "ਸੇਰੇਮਨੀ ਇੰਡੀਅਨ ਕਿਊਜ਼ੀਨ",
+    "ceremony": "ਸੇਰੇਮਨੀ",
+    "desi road": "ਦੇਸੀ ਰੋਡ",
+    "riya": "ਰੀਆ",
+    "biryani": "ਬਿਰਯਾਨੀ",
+    "naan": "ਨਾਨ",
+    "lassi": "ਲੱਸੀ",
+    "tikka": "ਟਿੱਕਾ",
+    "paneer": "ਪਨੀਰ",
+    "chicken": "ਚਿਕਨ",
+    "roti": "ਰੋਟੀ",
+    "paratha": "ਪਰਾਠਾ",
+}
+# Pre-compile length-sorted (longest-first) patterns so "chicken tikka masala"
+# wins over "chicken".
+_HI_PATTERNS = sorted(_HI_MAP.items(), key=lambda kv: -len(kv[0]))
+_PA_PATTERNS = sorted(_PA_MAP.items(), key=lambda kv: -len(kv[0]))
+
+
+def _normalize_for_native_script(text: str, lang: str) -> str:
+    """Swap Latin-script menu words to Devanagari/Gurmukhi when reply is in hi/pa."""
+    if lang not in ("hi", "pa"):
+        return text
+    patterns = _HI_PATTERNS if lang == "hi" else _PA_PATTERNS
+    # Only normalize if the text already contains Devanagari/Gurmukhi — that tells us
+    # the reply IS in the target language and Latin words are leakage, not intentional.
+    native_range = (0x0900, 0x097F) if lang == "hi" else (0x0A00, 0x0A7F)
+    has_native = any(native_range[0] <= ord(c) <= native_range[1] for c in text)
+    if not has_native:
+        return text
+    out = text
+    for latin, native in patterns:
+        # Case-insensitive word-boundary swap
+        out = re.sub(r"\b" + re.escape(latin) + r"\b", native, out, flags=re.IGNORECASE)
+    return out
+
 
 def _clean_text(text: str) -> str:
     s = _EMOJI_RE.sub("", text or "")
@@ -68,6 +164,7 @@ async def tts_endpoint(req: TTSRequest):
                     voice_id = voice_map[req.lang]
 
         clean = _clean_text(req.text)
+        clean = _normalize_for_native_script(clean, req.lang or "")
         if not clean:
             raise HTTPException(status_code=400, detail="Empty text")
 
