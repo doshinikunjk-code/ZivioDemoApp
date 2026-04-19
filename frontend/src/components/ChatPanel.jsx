@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Mic, Volume2, MicOff } from 'lucide-react';
 import { detectOrderItems, getOfflineReply, stripPrices, ORDER_COMPLETE_PHRASES, ADD_ORDER_WORDS } from '@/utils/constants';
+import { startVAD } from '@/utils/vad';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 const DESI_ROAD_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
@@ -22,6 +23,8 @@ const QUICK_MSGS = [
 
 const MIN_CONFIDENCE = 0.55;
 const MIN_WORDS = 1;
+const MIN_SPEECH_PEAK = 0.045;   // require this much mic energy peak to accept any transcript
+const NOISE_FLOOR_CEILING = 0.08; // if ambient is this loud we warn user — likely too noisy
 
 export default function ChatPanel({
   speakerOn, toggleSpeaker, currentAudioRef,
@@ -32,11 +35,17 @@ export default function ChatPanel({
   const [typing, setTyping] = useState(false);
   const [lang, setLang] = useState('auto');
   const [micActive, setMicActive] = useState(false);
+  const [micStatus, setMicStatus] = useState('');      // 'calibrating' | 'listening' | 'speaking' | ''
+  const [micLevel, setMicLevel] = useState(0);          // 0..1 normalized for meter
   const [memoryText, setMemoryText] = useState(null);
   const [sessionId] = useState(() => 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
 
   const chatBodyRef = useRef(null);
   const recognitionRef = useRef(null);
+  const vadRef = useRef(null);
+  const vadPeakRef = useRef(0);
+  const vadThresholdRef = useRef(0.04);
+  const speechDetectedRef = useRef(false);
   const isAISpeakingRef = useRef(false);
   const typingIntervalRef = useRef(null);
   const greetingSentRef = useRef(false);
@@ -264,56 +273,121 @@ export default function ChatPanel({
     sendMessage(text);
   }, [sendMessage]);
 
-  const toggleMic = useCallback(() => {
-    if (micActive) {
-      try { recognitionRef.current?.stop(); } catch {}
-      setMicActive(false);
+  const stopMicAndVAD = useCallback(() => {
+    try { recognitionRef.current?.stop(); } catch {}
+    if (vadRef.current) {
+      try { vadRef.current.stop(); } catch {}
+      vadRef.current = null;
+    }
+    setMicActive(false);
+    setMicStatus('');
+    setMicLevel(0);
+  }, []);
+
+  const toggleMic = useCallback(async () => {
+    if (micActive) { stopMicAndVAD(); return; }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      addMessage('ai', 'Voice input not supported in this browser. Please type instead.');
       return;
     }
 
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-
+    // Don't start mic while AI is speaking — prevents echo / double-trigger
     if (isAISpeakingRef.current) {
       if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
+        try { currentAudioRef.current.pause(); } catch {}
         currentAudioRef.current = null;
       }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       isAISpeakingRef.current = false;
     }
 
-    const rec = new SR();
-    const langMap = { auto: 'en-IN', en: 'en-IN', pa: 'pa-IN', hi: 'hi-IN' };
-    rec.lang = langMap[lang] || 'en-IN';
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.maxAlternatives = 1;
+    // Reset VAD counters
+    vadPeakRef.current = 0;
+    speechDetectedRef.current = false;
+    setMicStatus('calibrating');
+    setMicActive(true);
 
-    rec.onstart = () => setMicActive(true);
-    rec.onresult = (e) => {
-      const results = Array.from(e.results);
-      const transcript = results.map(r => r[0].transcript).join('');
-      setInput(transcript);
+    // 1. Open VAD stream + calibrate noise floor first
+    try {
+      vadRef.current = await startVAD({
+        onCalibrated: ({ threshold }) => {
+          vadThresholdRef.current = threshold;
+          setMicStatus('listening');
+        },
+        onLevel: ({ rms, threshold }) => {
+          if (rms > vadPeakRef.current) vadPeakRef.current = rms;
+          // normalize for meter: 0 at threshold, 1 at ~3x threshold
+          const norm = Math.min(1, Math.max(0, (rms - threshold * 0.5) / (threshold * 2.5)));
+          setMicLevel(norm);
+        },
+        onSpeechStart: () => {
+          speechDetectedRef.current = true;
+          setMicStatus('speaking');
+        },
+        onSpeechEnd: () => {
+          setMicStatus('listening');
+        },
+      });
+    } catch (err) {
+      setMicActive(false);
+      setMicStatus('');
+      addMessage('ai', 'Microphone access denied. Please allow mic permission.');
+      return;
+    }
 
-      const lastResult = results[results.length - 1];
-      if (lastResult.isFinal) {
-        const confidence = lastResult[0].confidence;
-        const wordCount = transcript.trim().split(/\s+/).length;
+    // 2. Start SpeechRecognition AFTER calibration began (so it doesn't eat the first 400ms)
+    setTimeout(() => {
+      if (!vadRef.current) return;  // mic was stopped mid-calibration
+      const rec = new SR();
+      const langMap = { auto: 'en-IN', en: 'en-IN', pa: 'pa-IN', hi: 'hi-IN' };
+      rec.lang = langMap[lang] || 'en-IN';
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
 
-        if (confidence >= MIN_CONFIDENCE && wordCount >= MIN_WORDS) {
-          setMicActive(false);
-          setTimeout(() => sendMessage(transcript.trim()), 300);
-        } else {
-          setMicActive(false);
+      rec.onresult = (e) => {
+        const results = Array.from(e.results);
+        const transcript = results.map(r => r[0].transcript).join('');
+        setInput(transcript);
+
+        const lastResult = results[results.length - 1];
+        if (!lastResult.isFinal) return;
+
+        const confidence = lastResult[0].confidence ?? 0;
+        const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
+        const peak = vadPeakRef.current;
+        const threshold = vadThresholdRef.current;
+
+        stopMicAndVAD();
+
+        // REJECT background chatter: either no sustained speech detected OR peak energy
+        // never exceeded the calibrated speech threshold with margin.
+        const energyOK = speechDetectedRef.current && peak >= Math.max(threshold, MIN_SPEECH_PEAK);
+        const speechOK = confidence >= MIN_CONFIDENCE && wordCount >= MIN_WORDS;
+
+        if (!energyOK) {
+          setInput('');
+          return;  // silently ignore — background noise
         }
-      }
-    };
-    rec.onerror = () => setMicActive(false);
-    rec.onend = () => setMicActive(false);
+        if (!speechOK) {
+          setInput('');
+          return;
+        }
 
-    recognitionRef.current = rec;
-    rec.start();
-  }, [micActive, lang, currentAudioRef, sendMessage]);
+        setTimeout(() => sendMessage(transcript.trim()), 200);
+      };
+      rec.onerror = () => stopMicAndVAD();
+      rec.onend = () => {
+        // If ended without a final result, just clean up
+        if (micActive) stopMicAndVAD();
+      };
+
+      recognitionRef.current = rec;
+      try { rec.start(); } catch { stopMicAndVAD(); }
+    }, 450);  // slightly after calibration window
+  }, [micActive, lang, currentAudioRef, sendMessage, addMessage, stopMicAndVAD]);
 
   useEffect(() => {
     if (window.speechSynthesis) {
@@ -435,7 +509,28 @@ export default function ChatPanel({
 
       {/* NOISE FILTER INDICATOR */}
       <div className="noise-filter-badge" data-testid="noise-filter-badge">
-        🛡️ Background Noise Filter Active — Only direct speech is processed
+        {micActive && micStatus === 'calibrating' && (
+          <><span className="nf-dot nf-calibrating" /> Calibrating background noise…</>
+        )}
+        {micActive && micStatus === 'listening' && (
+          <>
+            <span className="nf-dot nf-listening" /> Listening — speak clearly
+            <span className="mic-meter" aria-hidden="true">
+              <span className="mic-meter-fill" style={{ width: `${Math.round(micLevel * 100)}%` }} />
+            </span>
+          </>
+        )}
+        {micActive && micStatus === 'speaking' && (
+          <>
+            <span className="nf-dot nf-speaking" /> Speech detected ✓
+            <span className="mic-meter" aria-hidden="true">
+              <span className="mic-meter-fill mic-meter-on" style={{ width: `${Math.round(micLevel * 100)}%` }} />
+            </span>
+          </>
+        )}
+        {!micActive && (
+          <>🛡️ Background Noise Filter Active — Only direct speech is processed</>
+        )}
       </div>
     </div>
   );

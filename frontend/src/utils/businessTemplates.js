@@ -13,7 +13,7 @@ export const BUSINESS_TEMPLATES = {
       brand_tagline: 'Desi Daru Desi Khana',
       special_name: 'Shahi Lamb Chops',
       special_desc: 'discounted price tonight',
-      monthly_price: '$799',
+      monthly_price: '$599',
       logo_url: 'https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg',
       menu: [
         { name: 'Butter Chicken Cones', price: 16.99, category: 'main' },
@@ -77,14 +77,14 @@ export const BUSINESS_TEMPLATES = {
       compare: {
         competitors: ['Uber Eats', 'DoorDash'],
         rows: [
-          ['Monthly fee', '$0', '$0', '$799 flat'],
+          ['Monthly fee', '$0', '$0', '$599 flat'],
           ['Commission per order', '25–35%', '25–30%', '0%'],
           ['You own the customer', '✗', '✗', '✓'],
           ['Multilingual support', '✗', '✗', '✓'],
           ['24/7 ordering', '✗', '✗', '✓'],
         ],
       },
-      pricing: { amount: '$799', period: '/month CAD · First month free · No contract' },
+      pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
     },
   },
 
@@ -190,7 +190,7 @@ export const BUSINESS_TEMPLATES = {
       brand_tagline: 'Care Beyond the Counter',
       special_name: 'Free Flu Shot',
       special_desc: 'walk-in, no appointment needed',
-      monthly_price: '$499',
+      monthly_price: '$599',
       logo_url: '',
       menu: [
         { name: 'Prescription Refill', price: 0, category: 'rx' },
@@ -257,10 +257,10 @@ export const BUSINESS_TEMPLATES = {
           ['Multilingual', '✗', '✗', '✓'],
           ['Takes refills', 'Sometimes', '✗', '✓'],
           ['Patient notification', '✗', '✗', '✓'],
-          ['Monthly cost', '$0 (staff time)', '$200+', '$499'],
+          ['Monthly cost', '$0 (staff time)', '$200+', '$599'],
         ],
       },
-      pricing: { amount: '$499', period: '/month CAD · First month free · No contract' },
+      pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
     },
   },
 
@@ -366,7 +366,7 @@ export const BUSINESS_TEMPLATES = {
       brand_tagline: 'Healthcare That Listens',
       special_name: 'Same-Day Appointments',
       special_desc: 'available for urgent needs',
-      monthly_price: '$699',
+      monthly_price: '$599',
       logo_url: '',
       menu: [
         { name: 'General Consultation', price: 0, category: 'visit' },
@@ -433,10 +433,10 @@ export const BUSINESS_TEMPLATES = {
           ['After-hours booking', '✗', '✗', '✓'],
           ['Multilingual', 'Sometimes', '✗', '✓'],
           ['Rx renewals by text', '✗', '✗', '✓'],
-          ['Monthly cost', '$3,500+ (staff)', '$300', '$699'],
+          ['Monthly cost', '$3,500+ (staff)', '$300', '$599'],
         ],
       },
-      pricing: { amount: '$699', period: '/month CAD · First month free · No contract' },
+      pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
     },
   },
 
@@ -454,7 +454,7 @@ export const BUSINESS_TEMPLATES = {
       brand_tagline: 'We Fix It Right',
       special_name: 'Free Furnace Inspection',
       special_desc: 'with any service booking this month',
-      monthly_price: '$499',
+      monthly_price: '$599',
       logo_url: '',
       menu: [
         { name: 'Plumbing Service Call', price: 89, category: 'plumbing' },
@@ -521,10 +521,10 @@ export const BUSINESS_TEMPLATES = {
           ['Books jobs', '✗', '✗', '✓'],
           ['Collects details', 'Basic', '✗', 'Full + photos'],
           ['Emergency routing', '✗', '✗', '✓'],
-          ['Monthly cost', '$500+', '$0', '$499'],
+          ['Monthly cost', '$500+', '$0', '$599'],
         ],
       },
-      pricing: { amount: '$499', period: '/month CAD · First month free · No contract' },
+      pricing: { amount: '$599', period: '/month CAD · First month free · No contract' },
     },
   },
 };

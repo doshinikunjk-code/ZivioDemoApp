@@ -1,0 +1,58 @@
+{
+  "summary": "Phase 7 testing complete — VAD noise-filter integration + unified $599 pricing. Backend: 6/6 pytest tests PASSED (health, default price=$599, PUT persistence, chat, TTS). Frontend: all 6 templates (restaurant, dentist, pharmacy, pizza, doctor, trades) now show $599 on both Pricing screen AND Compare screen monthly-cost row. No leftover $499/$699/$799 anywhere. Noise-filter-badge default text correct. Mic button handles getUserMedia denial gracefully with in-chat message. Zero console/page errors across full regression.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_zivio_phase7_unified_pricing.py",
+    "/app/test_reports/pytest/pytest_phase7_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "NOTE: /app/backend/tests/test_zivio_phase6_templates.py still hardcodes old prices ($799 restaurant, $499 pharmacy/trades, $699 doctor) in its TEMPLATES dict and the cleanup test restores monthly_price='$799'. This file is now stale vs. Phase 7 unified pricing — recommend main agent update or remove it to avoid corrupting the DB default price back to $799 on future runs.",
+    "server.py file is 662 lines — approaching the 700-line threshold; consider splitting into routers (restaurant, chat, tts, orders, whatsapp, analytics) for maintainability.",
+    "In /api/chat the catch-all except wraps upstream LLM 502 as 500 — consider forwarding upstream status codes so clients can distinguish transient gateway errors from true server bugs."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_zivio_phase7_unified_pricing.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6)",
+    "frontend": "100% (all 6 templates + VAD UI verified)"
+  },
+  "test_credentials": "No authentication required",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 7 shipped: (1) Backend Restaurant model default monthly_price='$599' confirmed in server.py line 68 and via GET /api/restaurant/default. (2) All 6 templates in businessTemplates.js unified to $599 — verified on Pricing and Compare screens. (3) VAD mic integration: default badge shows '🛡️ Background Noise Filter Active — Only direct speech is processed', on mic click it either calibrates→listens (with real mic) or shows 'Microphone access denied' chat bubble (headless). Playwright's grant_permissions does not provide an actual audio device, so the calibrating/listening state transitions cannot be tested headless — only the denial path and the default/idle state. To verify VAD states on a real device, manual testing is required. The stale phase6 test file should be updated to use $599 so it doesn't reset the DB on rerun.",
+  "features_tested": {
+    "backend": [
+      "GET /api/ health — 200 ✓",
+      "GET /api/restaurant/default returns monthly_price '$599' ✓",
+      "PUT /api/restaurant/default with $599 persists ✓",
+      "POST /api/chat returns reply with session continuity ✓",
+      "POST /api/tts rejects empty text ✓",
+      "POST /api/tts returns audio/mpeg ✓"
+    ],
+    "frontend": [
+      "Page loads with 0 console errors ✓",
+      "mic-btn + noise-filter-badge both present with data-testid ✓",
+      "Default badge: '🛡️ Background Noise Filter Active — Only direct speech is processed' ✓",
+      "Click template Restaurant → Pricing $599 ✓ / Compare $599 ✓ / no $799 in body ✓",
+      "Click template Dentist → Pricing $599 ✓ / Compare $599 ✓ ✓",
+      "Click template Pharmacy → Pricing $599 ✓ / Compare $599 ✓ (was $499) ✓",
+      "Click template Pizza → Pricing $599 ✓ / Compare $599 ✓ ✓",
+      "Click template Doctor → Pricing $599 ✓ / Compare $599 ✓ (was $699) ✓",
+      "Click template Skilled Trades → Pricing $599 ✓ / Compare $599 ✓ (was $499) ✓",
+      "Mic click with no audio device → graceful 'Microphone access denied' chat bubble, no JS error, returns to default badge ✓",
+      "Navigation across all nav-* screens works without regression ✓"
+    ]
+  },
+  "rca of the issue": "N/A — no issues found. VAD calibrating→listening state transitions could not be verified in headless Playwright because the browser context has no real audio capture device; the denial path is handled correctly and the default/idle badge state is correct. Recommend manual browser verification on a real machine to visually confirm the calibrating→listening progression and mic-meter bar."
+}

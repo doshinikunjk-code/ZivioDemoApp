@@ -520,6 +520,30 @@ a[href*="emergent.sh"] {
   color: var(--green2);
   font-weight: 600;
   margin-top: 8px;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.nf-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.nf-dot.nf-calibrating { background: var(--gold); animation: nfblink 0.8s ease infinite; }
+.nf-dot.nf-listening { background: var(--green2); animation: nfblink 1.4s ease infinite; }
+.nf-dot.nf-speaking { background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,.5); }
+@keyframes nfblink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+.mic-meter {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-left: 6px;
+}
+.mic-meter-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  transition: width .08s linear;
+}
+.mic-meter-fill.mic-meter-on {
+  background: linear-gradient(90deg, #FF7070, #FF4040);
 }
 
 /* CUSTOM DEMO BAR */

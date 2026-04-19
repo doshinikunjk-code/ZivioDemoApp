@@ -65,7 +65,7 @@ class RestaurantConfig(BaseModel):
     reception_phone: str = ""
     google_place_id: str = ""
     google_review_url: str = ""
-    monthly_price: str = "$799"
+    monthly_price: str = "$599"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class OrderCreate(BaseModel):
