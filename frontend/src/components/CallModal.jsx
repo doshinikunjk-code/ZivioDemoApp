@@ -31,7 +31,9 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
     if (!speakerOn || !text) return;
     const clean = text.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').replace(/[—]/g, ', ').replace(/[•\n]/g, ' ').replace(/  +/g, ' ').trim();
     if (!clean) return;
-    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null; }
+    // KILL all audio to prevent echo
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; currentAudioRef.current = null; }
     isAISpeakingRef.current = true;
 
     try {
@@ -43,8 +45,10 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
       if (!r.ok) throw new Error('TTS failed');
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
+      if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       const audio = new Audio(url);
-      audio.playbackRate = 0.97;
+      audio.playbackRate = 1.05;
       currentAudioRef.current = audio;
       audio.onended = () => { URL.revokeObjectURL(url); isAISpeakingRef.current = false; currentAudioRef.current = null; };
       audio.onerror = () => { isAISpeakingRef.current = false; currentAudioRef.current = null; };
@@ -54,7 +58,7 @@ export default function CallModal({ onClose, speakerOn, currentAudioRef }) {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
         const utt = new SpeechSynthesisUtterance(clean);
-        utt.rate = 0.92; utt.pitch = 0.95;
+        utt.rate = 1.0; utt.pitch = 0.95;
         utt.onend = () => { isAISpeakingRef.current = false; };
         window.speechSynthesis.speak(utt);
       }

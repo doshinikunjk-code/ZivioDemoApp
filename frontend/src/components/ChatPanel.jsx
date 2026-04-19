@@ -57,8 +57,11 @@ export default function ChatPanel({
       .trim();
     if (!clean) return;
 
+    // KILL all existing audio first to prevent echo
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
+      currentAudioRef.current.src = '';
       currentAudioRef.current = null;
     }
 
@@ -73,8 +76,14 @@ export default function ChatPanel({
       if (!r.ok) throw new Error('TTS failed');
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
+      // Double-check nothing else started while we were fetching
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = '';
+      }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       const audio = new Audio(url);
-      audio.playbackRate = 0.97;
+      audio.playbackRate = 1.05;
       currentAudioRef.current = audio;
       audio.onended = () => {
         URL.revokeObjectURL(url);
@@ -88,10 +97,11 @@ export default function ChatPanel({
       await audio.play();
     } catch {
       isAISpeakingRef.current = false;
+      // Browser TTS fallback — only if ElevenLabs completely failed
       if (!window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(clean);
-      utt.rate = 0.92;
+      utt.rate = 1.0;
       utt.pitch = 0.95;
       const voices = window.speechSynthesis.getVoices();
       const v = voices.find(v => v.name === 'Lekha') ||
@@ -316,12 +326,12 @@ export default function ChatPanel({
       const recent = getRecentOrder();
       setTimeout(() => {
         if (recent) {
-          const greeting = `Welcome back ji! Last time you had ${recent.items.join(', ')}. Same again or something new today?`;
+          const greeting = `Welcome back! Last time you had ${recent.items.join(', ')}. Same again or something new?`;
           addMessage('ai', greeting);
           speak(greeting);
           setMemoryText(`Welcome back! Last order: ${recent.items.join(', ')}`);
         } else {
-          const greeting = 'Sat Sri Akal ji! Welcome to Desi Road. Kya order karna chahenge aaj?';
+          const greeting = 'Sat Sri Akal! Welcome to Desi Road. What can I get you today?';
           addMessage('ai', greeting);
           speak(greeting);
         }

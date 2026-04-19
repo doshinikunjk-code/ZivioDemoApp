@@ -7,6 +7,7 @@ import CallModal from "@/components/CallModal";
 import ContentScreens from "@/components/ContentScreens";
 import AdminPanel from "@/components/AdminPanel";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import CustomDemoBar from "@/components/CustomDemoBar";
 import { Phone, Volume2, VolumeX, Radio } from "lucide-react";
 
 const DESI_ROAD_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
@@ -115,6 +116,7 @@ function ZivioApp() {
                 <div className="ph-h">Your customer. Your number.<br /><em>One AI. Every language.</em></div>
                 <div className="ph-s">This is exactly what a customer experiences on WhatsApp or phone. Type in English, Punjabi, Hindi — or mix all three. The AI handles it all, remembers returning customers, and never misses an order.</div>
               </div>
+              <CustomDemoBar />
               <div className="chat-wrap">
                 <ChatPanel
                   speakerOn={speakerOn}
