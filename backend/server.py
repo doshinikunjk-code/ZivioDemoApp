@@ -61,6 +61,7 @@ class RestaurantConfig(BaseModel):
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_whatsapp_number: str = ""
+    twilio_voice_number: str = ""
     kitchen_phone: str = ""
     reception_phone: str = ""
     google_place_id: str = ""
@@ -328,12 +329,19 @@ async def tts_endpoint(req: TTSRequest):
         if not clean:
             raise HTTPException(status_code=400, detail="Empty text")
         async with httpx.AsyncClient(timeout=30.0) as http_client:
+            # Tuned voice settings for warm, expressive Indian-accented delivery.
+            # Lower stability = more natural prosody variation; higher style = more personality.
             response = await http_client.post(
                 f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
                 json={
                     "text": clean,
                     "model_id": "eleven_multilingual_v2",
-                    "voice_settings": {"stability": 0.50, "similarity_boost": 0.90, "style": 0.30, "use_speaker_boost": True}
+                    "voice_settings": {
+                        "stability": 0.38,
+                        "similarity_boost": 0.88,
+                        "style": 0.55,
+                        "use_speaker_boost": True,
+                    },
                 },
                 headers={"xi-api-key": EL_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"}
             )
@@ -480,6 +488,241 @@ async def whatsapp_status(restaurant_id: str = "default"):
     token = config.get("twilio_auth_token") or TWILIO_AUTH_TOKEN
     wa = config.get("twilio_whatsapp_number") or TWILIO_WHATSAPP_NUMBER
     return {"configured": bool(sid and token and wa), "whatsapp_number": wa or ""}
+
+
+# ═══════════════════════════════════════════════════════════════
+# TWILIO VOICE IVR (Inbound phone calls)
+# ═══════════════════════════════════════════════════════════════
+# Flow: customer dials Twilio number → Twilio hits /voice → we greet + <Gather>
+# speech → Twilio POSTs SpeechResult to /voice/respond → we feed it to the
+# LLM chat → return TwiML with <Play> of ElevenLabs audio + another <Gather>.
+
+# In-memory short-lived cache for generated audio (id → mp3 bytes).
+# Each entry expires after ~60s (Twilio fetches immediately after TwiML returns).
+import time  # noqa: E402
+from collections import OrderedDict  # noqa: E402
+
+_TTS_CACHE: "OrderedDict[str, tuple[float, bytes]]" = OrderedDict()
+_TTS_CACHE_MAX = 200
+_TTS_CACHE_TTL_S = 120
+
+
+def _cache_audio(audio_bytes: bytes) -> str:
+    """Store audio bytes and return a short id for Twilio <Play> to fetch."""
+    audio_id = uuid.uuid4().hex[:12]
+    now = time.time()
+    # Evict old entries
+    while _TTS_CACHE and next(iter(_TTS_CACHE.values()))[0] < now - _TTS_CACHE_TTL_S:
+        _TTS_CACHE.popitem(last=False)
+    while len(_TTS_CACHE) >= _TTS_CACHE_MAX:
+        _TTS_CACHE.popitem(last=False)
+    _TTS_CACHE[audio_id] = (now, audio_bytes)
+    return audio_id
+
+
+async def _generate_eleven_audio(text: str, voice_id: str) -> Optional[bytes]:
+    """Generate ElevenLabs audio bytes. Returns None on failure (caller should fall back to <Say>)."""
+    if not EL_API_KEY or not voice_id or not text.strip():
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+                json={
+                    "text": text,
+                    "model_id": "eleven_multilingual_v2",
+                    "voice_settings": {
+                        "stability": 0.38,
+                        "similarity_boost": 0.88,
+                        "style": 0.55,
+                        "use_speaker_boost": True,
+                    },
+                },
+                headers={"xi-api-key": EL_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"},
+            )
+            if r.status_code == 200:
+                return r.content
+            logger.error(f"IVR EL error {r.status_code}: {r.text[:200]}")
+            return None
+    except Exception as e:
+        logger.error(f"IVR EL exception: {e}")
+        return None
+
+
+def _public_base_url(request: Request) -> str:
+    """Derive a public https:// base URL from the incoming request."""
+    forwarded_host = request.headers.get("x-forwarded-host") or request.url.hostname
+    return f"https://{forwarded_host}"
+
+
+def _pick_voice_id(config: dict, lang: str) -> str:
+    """Pick the best voice id for the given language from config, falling back to default."""
+    voice_map = (config or {}).get("voice_ids") or {}
+    return voice_map.get(lang) or voice_map.get("en") or EL_DEFAULT_VOICE
+
+
+# Map per-language → Twilio built-in Polly voice as last-resort fallback.
+# These are Neural voices that already have warm Indian accents.
+_POLLY_FALLBACK = {
+    "en": ("Polly.Raveena-Neural", "en-IN"),
+    "hi": ("Polly.Aditi", "hi-IN"),
+    "pa": ("Polly.Raveena-Neural", "en-IN"),  # Polly has no Punjabi — use Indian English
+    "auto": ("Polly.Raveena-Neural", "en-IN"),
+}
+
+
+def _twiml_speak(text: str, audio_id: Optional[str], base_url: str, lang: str) -> str:
+    """Build a <Play> TwiML tag if we have cached ElevenLabs audio, otherwise <Say> with Polly Indian voice."""
+    if audio_id:
+        play_url = f"{base_url}/api/tts-cache/{audio_id}.mp3"
+        return f"<Play>{play_url}</Play>"
+    voice, tw_lang = _POLLY_FALLBACK.get(lang, _POLLY_FALLBACK["en"])
+    # Escape XML-sensitive characters
+    safe = (text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return f'<Say voice="{voice}" language="{tw_lang}">{safe}</Say>'
+
+
+def _build_voice_twiml(reply_text: str, audio_id: Optional[str], base_url: str, lang: str, session_id: str, end: bool = False) -> str:
+    """Compose a full <Response> with a spoken reply + optional <Gather> for the next turn."""
+    spoken = _twiml_speak(reply_text, audio_id, base_url, lang)
+    if end:
+        return f'<?xml version="1.0" encoding="UTF-8"?><Response>{spoken}<Hangup/></Response>'
+    gather_action = f"{base_url}/api/webhook/twilio/voice/respond?session_id={session_id}&lang={lang}"
+    # speechTimeout=auto = Twilio decides based on silence; experimental_conversations = best for dialogue
+    voice, tw_lang = _POLLY_FALLBACK.get(lang, _POLLY_FALLBACK["en"])
+    gather = (
+        f'<Gather input="speech" speechTimeout="auto" speechModel="experimental_conversations" '
+        f'language="{tw_lang}" hints="butter chicken, lamb chops, biryani, naan, lassi, '
+        f'order, yes, no, confirm, pickup, delivery" '
+        f'action="{gather_action}" method="POST">'
+        f'{spoken}'
+        f'</Gather>'
+        # Fallback if caller says nothing
+        f'<Say voice="{voice}" language="{tw_lang}">Sorry, I didn\'t catch that. Please call again.</Say>'
+        f'<Hangup/>'
+    )
+    return f'<?xml version="1.0" encoding="UTF-8"?><Response>{gather}</Response>'
+
+
+async def _ivr_ai_turn(session_id: str, user_text: str, lang: str, config: dict) -> str:
+    """Send caller speech to the AI and return the reply text."""
+    if session_id not in chat_sessions:
+        system = build_system_prompt(config, is_call=True)
+        chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=system)
+        chat.with_model("anthropic", "claude-haiku-4-5-20251001")
+        chat_sessions[session_id] = chat
+        await track_event(config.get("id", "default"), "call_started", {"session_id": session_id})
+
+    msg = user_text
+    if lang and lang != "auto":
+        lang_instr = {
+            "en": "Reply ONLY in natural spoken English with an Indian tone.",
+            "hi": "Reply ONLY in Hindi (Devanagari script). No English words.",
+            "pa": "Reply ONLY in Punjabi (Gurmukhi script). No English words.",
+        }.get(lang)
+        if lang_instr:
+            msg = f"[Language instruction: {lang_instr}]\n{msg}"
+
+    response = await chat_sessions[session_id].send_message(UserMessage(text=msg))
+    await track_event(config.get("id", "default"), "call_message", {"session_id": session_id})
+    return (response or "").strip()
+
+
+@api_router.post("/webhook/twilio/voice")
+async def voice_inbound(request: Request):
+    """Inbound call entrypoint. Greets the caller and starts the Gather loop."""
+    form = await request.form()
+    call_sid = form.get("CallSid", uuid.uuid4().hex)
+    from_number = form.get("From", "")
+    logger.info(f"Voice call received from {from_number} (sid={call_sid})")
+
+    config = await db.restaurants.find_one({"id": "default"}, {"_id": 0}) or {}
+    rname = config.get("name", "Desi Road")
+    base_url = _public_base_url(request)
+    session_id = f"call_{call_sid}"
+    lang = "en"
+
+    greeting = (
+        f"Hello! Thank you for calling {rname}. This is Riya. "
+        f"What can I get started for you today?"
+    )
+
+    voice_id = _pick_voice_id(config, lang)
+    audio = await _generate_eleven_audio(greeting, voice_id)
+    audio_id = _cache_audio(audio) if audio else None
+
+    twiml = _build_voice_twiml(greeting, audio_id, base_url, lang, session_id)
+    return Response(content=twiml, media_type="application/xml")
+
+
+@api_router.post("/webhook/twilio/voice/respond")
+async def voice_respond(request: Request, session_id: str = "", lang: str = "en"):
+    """Handles each speech turn from the caller."""
+    form = await request.form()
+    speech_result = (form.get("SpeechResult") or "").strip()
+    confidence = float(form.get("Confidence") or 0.0)
+    logger.info(f"Voice turn {session_id} (conf={confidence:.2f}): {speech_result}")
+
+    config = await db.restaurants.find_one({"id": "default"}, {"_id": 0}) or {}
+    base_url = _public_base_url(request)
+
+    if not speech_result:
+        # No speech captured — re-prompt once
+        prompt = "Sorry, I didn't catch that. Could you say it again?"
+        voice_id = _pick_voice_id(config, lang)
+        audio = await _generate_eleven_audio(prompt, voice_id)
+        audio_id = _cache_audio(audio) if audio else None
+        return Response(
+            content=_build_voice_twiml(prompt, audio_id, base_url, lang, session_id),
+            media_type="application/xml",
+        )
+
+    # Get AI response
+    try:
+        reply = await _ivr_ai_turn(session_id, speech_result, lang, config)
+    except Exception as e:
+        logger.error(f"IVR AI turn error: {e}")
+        reply = "Sorry, I had a small glitch. Could you repeat that?"
+
+    # Detect if caller wants to end / order is complete
+    end_phrases = [
+        "see you at", "thank you", "bye", "alhamdulillah", "milte hain",
+        "20 min", "ready in", "pickup confirmed",
+    ]
+    should_end = any(p in reply.lower() for p in end_phrases) and len(reply) > 20
+
+    # Generate premium audio for the reply
+    voice_id = _pick_voice_id(config, lang)
+    audio = await _generate_eleven_audio(reply, voice_id)
+    audio_id = _cache_audio(audio) if audio else None
+
+    twiml = _build_voice_twiml(reply, audio_id, base_url, lang, session_id, end=should_end)
+    return Response(content=twiml, media_type="application/xml")
+
+
+@api_router.get("/tts-cache/{audio_id}.mp3")
+async def serve_cached_audio(audio_id: str):
+    """Serves a one-time ElevenLabs-generated audio clip for Twilio <Play>."""
+    entry = _TTS_CACHE.get(audio_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="audio expired")
+    _, audio_bytes = entry
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+@api_router.get("/voice/status")
+async def voice_status(restaurant_id: str = "default"):
+    """Quick health check for the Voice IVR — is Twilio configured?"""
+    config = await db.restaurants.find_one({"id": restaurant_id}, {"_id": 0}) or {}
+    sid = config.get("twilio_account_sid") or TWILIO_ACCOUNT_SID
+    token = config.get("twilio_auth_token") or TWILIO_AUTH_TOKEN
+    voice_num = config.get("twilio_voice_number") or os.environ.get("TWILIO_VOICE_NUMBER", "")
+    return {
+        "configured": bool(sid and token),
+        "voice_number": voice_num,
+        "webhook_url": "/api/webhook/twilio/voice",
+        "elevenlabs_enabled": bool(EL_API_KEY),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════

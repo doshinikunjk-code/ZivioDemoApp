@@ -49,6 +49,8 @@ export default function ChatPanel({
   const isAISpeakingRef = useRef(false);
   const typingIntervalRef = useRef(null);
   const greetingSentRef = useRef(false);
+  const speakEpochRef = useRef(0);
+  const lastSpokenRef = useRef({ text: '', at: 0 });
 
   const scrollToBottom = useCallback(() => {
     if (chatBodyRef.current) {
@@ -66,10 +68,21 @@ export default function ChatPanel({
       .trim();
     if (!clean) return;
 
-    // KILL all existing audio first to prevent echo
+    // Dedupe — if identical text was already started in the last 1.2s, skip
+    // (protects against React StrictMode double-effects + duplicate sendMessage races)
+    const now = Date.now();
+    if (lastSpokenRef.current.text === clean && now - lastSpokenRef.current.at < 1200) {
+      return;
+    }
+    lastSpokenRef.current = { text: clean, at: now };
+
+    // Increment epoch — any in-flight or pending audio from prior calls becomes stale
+    const epoch = ++speakEpochRef.current;
+
+    // KILL all existing audio first
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
+      try { currentAudioRef.current.pause(); } catch {}
       currentAudioRef.current.src = '';
       currentAudioRef.current = null;
     }
@@ -82,43 +95,44 @@ export default function ChatPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: clean, lang, restaurant_id: 'default' })
       });
+      // If a newer speak() has started while we were fetching, abandon this one
+      if (epoch !== speakEpochRef.current) return;
       if (!r.ok) throw new Error('TTS failed');
       const blob = await r.blob();
+      if (epoch !== speakEpochRef.current) return;
       const url = URL.createObjectURL(blob);
-      // Double-check nothing else started while we were fetching
       if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
+        try { currentAudioRef.current.pause(); } catch {}
         currentAudioRef.current.src = '';
       }
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
       const audio = new Audio(url);
       audio.playbackRate = 1.05;
       currentAudioRef.current = audio;
       audio.onended = () => {
         URL.revokeObjectURL(url);
-        isAISpeakingRef.current = false;
-        currentAudioRef.current = null;
+        if (currentAudioRef.current === audio) {
+          currentAudioRef.current = null;
+          isAISpeakingRef.current = false;
+        }
       };
       audio.onerror = () => {
-        isAISpeakingRef.current = false;
-        currentAudioRef.current = null;
+        if (currentAudioRef.current === audio) {
+          currentAudioRef.current = null;
+          isAISpeakingRef.current = false;
+        }
       };
+      // Final staleness check before play
+      if (epoch !== speakEpochRef.current) {
+        try { audio.pause(); } catch {}
+        URL.revokeObjectURL(url);
+        return;
+      }
       await audio.play();
     } catch {
       isAISpeakingRef.current = false;
-      // Browser TTS fallback — only if ElevenLabs completely failed
-      if (!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(clean);
-      utt.rate = 1.0;
-      utt.pitch = 0.95;
-      const voices = window.speechSynthesis.getVoices();
-      const v = voices.find(v => v.name === 'Lekha') ||
-                voices.find(v => v.lang === 'hi-IN') ||
-                voices.find(v => v.name === 'Samantha');
-      if (v) utt.voice = v;
-      utt.onend = () => { isAISpeakingRef.current = false; };
-      window.speechSynthesis.speak(utt);
+      // No browser speechSynthesis fallback — it's robotic and has caused
+      // "reads twice" bug when ElevenLabs audio also plays. If ElevenLabs truly
+      // fails the message still shows in the chat, user can tap Listen to retry.
     }
   }, [speakerOn, lang, currentAudioRef]);
 

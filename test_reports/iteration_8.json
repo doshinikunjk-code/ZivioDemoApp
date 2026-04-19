@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 8 — tested Twilio Voice IVR backend (webhook/voice, webhook/voice/respond, tts-cache, voice/status), /api/tts expressive settings, twilio_voice_number persistence, and regression on restaurant/chat/orders. Also verified ChatPanel double-read fix (dedupe of /api/tts POSTs) and AdminPanel new Voice IVR section. All 12 backend tests pass. All frontend dedupe checks pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_zivio_phase8_voice_ivr.py",
+    "/app/test_reports/pytest/pytest_phase8_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is 905 lines — exceeds 700-line guideline; consider splitting Voice IVR, TTS, and restaurant CRUD into separate routers/modules for maintainability.",
+    "chat_sessions is an in-memory dict that grows unbounded (one per CallSid + one per chat session). Add TTL-based eviction or LRU cap to avoid memory pressure over long uptime.",
+    "/api/tts does not use the _TTS_CACHE (only the Voice IVR path does). Repeat clicks of 'Listen' for the same text will hit ElevenLabs each time — consider text-hash caching to save quota and latency.",
+    "_POLLY_FALLBACK for Punjabi falls back to Indian English. Acceptable for now, but surface a WARN log when this fallback engages so ops knows accent won't match."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_zivio_phase8_voice_ivr.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12)",
+    "frontend": "100% — greeting dedupe, quick-msg-2 (Menu), quick-msg-3, Listen button dedupe, Admin Voice IVR section all passed"
+  },
+  "test_credentials": "No auth required; see /app/memory/test_credentials.md",
+  "seed_data_creation": "None — tests use existing default restaurant config (twilio_voice_number already +14375236468)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 8 validated the Twilio Voice IVR endpoints (/api/webhook/twilio/voice, /api/webhook/twilio/voice/respond, /api/tts-cache/{id}.mp3, /api/voice/status) and the ChatPanel double-read fix (epoch + 1.2s text-dedupe; removed speechSynthesis fallback). /api/tts POST is now observed exactly once per AI reply via network interception. ElevenLabs is working on this backend; the <Play> URL resolves to valid audio/mpeg. Admin Panel shows a new 'Voice IVR — Inbound phone calls' section below WhatsApp with a 'Not Configured' pill because TWILIO_ACCOUNT_SID/AUTH_TOKEN are not set in .env — this is correct & expected; webhooks still work without them (auth only matters for outbound).",
+  "rca_of_the_issue": "Double-read bug was caused by ChatPanel previously invoking BOTH ElevenLabs <audio>.play() AND window.speechSynthesis.speak() as a fallback. In the fix (ChatPanel.jsx L59-130): (a) removed the speechSynthesis fallback entirely, (b) added speakEpochRef — each speak() bumps an epoch, and in-flight stale fetches/audio are aborted, (c) added lastSpokenRef text+timestamp dedupe with 1.2s window to absorb React StrictMode double-effect invocations and duplicate sendMessage races. Verified via network interception that each unique AI reply produces exactly 1 POST to /api/tts."
+}

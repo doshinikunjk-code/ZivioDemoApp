@@ -11,6 +11,7 @@ export default function AdminPanel() {
   const [message, setMessage] = useState('');
   const [newItem, setNewItem] = useState({ name: '', price: '', category: 'main' });
   const [waStatus, setWaStatus] = useState(null);
+  const [voiceStatus, setVoiceStatus] = useState(null);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -19,6 +20,8 @@ export default function AdminPanel() {
       setConfig(data);
       const ws = await fetch(`${API}/whatsapp/status?restaurant_id=default`);
       setWaStatus(await ws.json());
+      const vs = await fetch(`${API}/voice/status?restaurant_id=default`);
+      setVoiceStatus(await vs.json());
     } catch { setMessage('Failed to load config'); }
     setLoading(false);
   }, []);
@@ -189,6 +192,23 @@ export default function AdminPanel() {
           <div className="admin-field">
             <label>WhatsApp Number</label>
             <input value={config.twilio_whatsapp_number || ''} onChange={e => updateField('twilio_whatsapp_number', e.target.value)} placeholder="+14155238886" data-testid="admin-twilio-wa" />
+          </div>
+        </div>
+      </div>
+
+      {/* TWILIO VOICE IVR */}
+      <div className="admin-section">
+        <div className="admin-section-title">
+          Voice IVR — Inbound phone calls
+          {voiceStatus && <span className={`admin-status-pill ${voiceStatus.configured ? 'active' : ''}`}>{voiceStatus.configured ? 'Connected' : 'Not Configured'}</span>}
+        </div>
+        <div className="ph-s" style={{ marginBottom: 12, fontSize: 12, maxWidth: 'none' }}>
+          Customers dial this number and talk to the AI in English / Hindi / Punjabi. After saving, in your Twilio Console → Phone Numbers → your number → <strong>A CALL COMES IN</strong> → set webhook to <code style={{ background: 'var(--card2)', padding: '2px 6px', borderRadius: 4 }}>{process.env.REACT_APP_BACKEND_URL}/api/webhook/twilio/voice</code> (method: POST).
+        </div>
+        <div className="admin-grid">
+          <div className="admin-field">
+            <label>Twilio Voice Number</label>
+            <input value={config.twilio_voice_number || ''} onChange={e => updateField('twilio_voice_number', e.target.value)} placeholder="+14375236468" data-testid="admin-twilio-voice-num" />
           </div>
         </div>
       </div>
