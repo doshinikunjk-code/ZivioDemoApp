@@ -1,83 +1,70 @@
-export default function ContentScreens({ screen, onNavigate }) {
+import { BUSINESS_TEMPLATES } from '@/utils/businessTemplates';
+
+export default function ContentScreens({ screen, onNavigate, businessType }) {
+  const t = BUSINESS_TEMPLATES[businessType || 'restaurant'];
+  if (!t) return null;
+  const p = t.presentation;
+  const name = t.config.name;
+
   const screens = {
-    problem: <ProblemScreen onNavigate={onNavigate} />,
-    solution: <SolutionScreen onNavigate={onNavigate} />,
-    features: <FeaturesScreen />,
-    compare: <CompareScreen />,
-    kitchen: <KitchenScreen />,
-    campaign: <CampaignScreen />,
-    pricing: <PricingScreen />,
-    start: <StartScreen onNavigate={onNavigate} />,
+    problem: <ProblemScreen p={p.problem} name={name} onNavigate={onNavigate} />,
+    solution: <SolutionScreen p={p.solution} name={name} onNavigate={onNavigate} />,
+    features: <FeaturesScreen features={p.features} name={name} price={p.pricing.amount} />,
+    compare: <CompareScreen compare={p.compare} name={name} />,
+    kitchen: <AlertsScreen name={name} type={businessType} />,
+    campaign: <CampaignScreen name={name} type={businessType} />,
+    pricing: <PricingScreen pricing={p.pricing} name={name} config={t.config} />,
+    start: <StartScreen name={name} onNavigate={onNavigate} />,
   };
   return <div className="screen show" data-testid={`screen-${screen}`}>{screens[screen] || null}</div>;
 }
 
-function ProblemScreen({ onNavigate }) {
+function ProblemScreen({ p, name, onNavigate }) {
   return (
     <>
-      <div className="ph-eyebrow">Step 1 — The Opportunity</div>
-      <div className="ph-h">Desi Road is losing orders<br /><em>every single night.</em></div>
-      <div className="ph-s">When the phone rings at 10pm and the kitchen is busy. When a Punjabi customer WhatsApps and gets no reply until morning. Every missed contact is a lost table — and lost revenue that never comes back.</div>
+      <div className="ph-eyebrow">{p.eyebrow}</div>
+      <div className="ph-h">{name} {p.title[0]}<br /><em>{p.title[1]}</em></div>
+      <div className="ph-s">{p.desc}</div>
       <div className="stats">
-        <div className="stat red"><div className="sv">73%</div><div className="sl">Never call back if nobody answers first time</div></div>
-        <div className="stat gold"><div className="sv">10pm</div><div className="sl">Peak hour when orders are lost to voicemail</div></div>
-        <div className="stat red"><div className="sv">30%</div><div className="sl">Commission Uber Eats takes per order, forever</div></div>
-        <div className="stat gold"><div className="sv">$0</div><div className="sl">Revenue from Punjabi customers who got no reply</div></div>
+        {p.stats.map((s, i) => (
+          <div className={`stat ${s.color}`} key={i}><div className="sv">{s.value}</div><div className="sl">{s.label}</div></div>
+        ))}
       </div>
-      <div className="sd">What is happening right now at Desi Road</div>
+      <div className="sd">What is happening right now</div>
       <div className="flow">
-        <FlowItem icon="📞" title="Phone rings at 10pm" desc="Staff are busy. Nobody answers. Customer calls a different restaurant." />
-        <FlowItem icon="💬" title="WhatsApp at 9pm — no reply" desc="Sits unread overnight. Customer orders Uber Eats — Uber keeps 30%." />
-        <FlowItem icon="🗣️" title="Punjabi customer messages" desc="No Punjabi-speaking staff at that hour. Customer never hears back." />
-        <FlowItem icon="🔄" title="Regular customer orders every Friday" desc="Has to repeat his full order every single time. No recognition." />
+        {p.flows.map((f, i) => <FlowItem key={i} icon={f.icon} num={f.num} title={f.title} desc={f.desc} />)}
       </div>
-      <div className="btn-row"><button className="btn btn-gold" data-testid="see-solution-btn" onClick={() => onNavigate('solution')}>See what Zivio does →</button></div>
+      <div className="btn-row"><button className="btn btn-gold" data-testid="see-solution-btn" onClick={() => onNavigate('solution')}>See the solution →</button></div>
     </>
   );
 }
 
-function SolutionScreen({ onNavigate }) {
+function SolutionScreen({ p, name, onNavigate }) {
   return (
     <>
-      <div className="ph-eyebrow">Step 2 — The Solution</div>
-      <div className="ph-h">Every order. Every language.<br /><em>Every hour.</em></div>
-      <div className="ph-s">Your existing WhatsApp number and phone line — completely unchanged. Zivio AI handles everything silently behind it, 24 hours a day.</div>
+      <div className="ph-eyebrow">{p.eyebrow}</div>
+      <div className="ph-h">{p.title[0]}<br /><em>{p.title[1]}</em></div>
+      <div className="ph-s">{p.desc}</div>
       <div className="stats">
-        <div className="stat green"><div className="sv">24/7</div><div className="sl">Orders taken — midnight, Sunday, Diwali, Christmas</div></div>
-        <div className="stat gold"><div className="sv">3</div><div className="sl">Languages — English, Punjabi, Hindi — auto-detected</div></div>
-        <div className="stat green"><div className="sv">20+</div><div className="sl">Simultaneous conversations handled at once</div></div>
-        <div className="stat gold"><div className="sv">$0</div><div className="sl">Commission per order — flat fee only, forever</div></div>
+        {p.stats.map((s, i) => (
+          <div className={`stat ${s.color}`} key={i}><div className="sv">{s.value}</div><div className="sl">{s.label}</div></div>
+        ))}
       </div>
-      <div className="sd">How it works at Desi Road</div>
+      <div className="sd">How it works at {name}</div>
       <div className="flow">
-        <FlowItem num="1" title="Customer contacts Desi Road — same number as always" desc="WhatsApp or phone on (437) 331-5615. Nothing changes for the customer." />
-        <FlowItem num="2" title="AI detects language and responds instantly" desc="Punjabi → Punjabi. Hindi → Hindi. English → English. Mixed → matched naturally." />
-        <FlowItem num="3" title="Takes the full order and confirms" desc="Remembers returning customers. Family can add items freely." />
-        <FlowItem num="4" title="Order goes to kitchen instantly" desc="Full formatted ticket sent to kitchen phone or receipt printer." />
-        <FlowItem num="5" title="Customer arrives — pays — you keep 100%" desc="No app. No website. No commission. Zero." />
+        {p.flows.map((f, i) => <FlowItem key={i} icon={f.icon} num={f.num} title={f.title} desc={f.desc} />)}
       </div>
       <div className="btn-row"><button className="btn btn-gold" data-testid="see-demo-btn" onClick={() => onNavigate('demo')}>See it live →</button></div>
     </>
   );
 }
 
-function FeaturesScreen() {
-  const features = [
-    { icon: '📞', title: '24/7 Phone Ordering', desc: 'AI voice answers in 2 rings. Takes full order, confirms. Even at 2am.', tag: 'Voice AI' },
-    { icon: '💬', title: 'WhatsApp Ordering', desc: 'On your existing number. Customers text the same number they always have.', tag: 'Existing Number' },
-    { icon: '🗣️', title: '3 Languages Auto-detect', desc: 'English, Punjabi, Hindi + code-switching. Auto-detected on every message.', tag: 'Brampton-ready' },
-    { icon: '🧠', title: 'Customer Memory', desc: '"Welcome back Raj ji! Same as usual?" One-tap reorder after 3rd visit.', tag: 'Loyalty' },
-    { icon: '📦', title: 'Add to Existing Order', desc: 'Customer calls back within 60 mins — AI knows their order and adds items.', tag: 'Smart Orders' },
-    { icon: '🔔', title: 'Kitchen Alerts Instant', desc: 'Every confirmed order to kitchen WhatsApp or receipt printer in 3 seconds.', tag: 'Kitchen' },
-    { icon: '✅', title: 'Order Ready Notification', desc: 'Food ready → AI messages customer instantly. Zero wait frustration.', tag: 'Zero Wait' },
-    { icon: '📢', title: 'Daily Special Campaigns', desc: '11am every day: AI broadcasts today\'s special to 300+ subscribers.', tag: 'Marketing' },
-    { icon: '⭐', title: 'Google Review Automation', desc: 'Happy customer → review request. Unhappy → owner alert before complaint.', tag: 'Reputation' },
-  ];
+function FeaturesScreen({ features, name, price }) {
   return (
     <>
       <div className="ph-eyebrow">Complete Feature Set</div>
       <div className="ph-h">Everything included.<br /><em>One flat price. Forever.</em></div>
-      <div className="ph-s">Every feature below is in your $799/month. No per-order fees. No commissions. No hidden charges.</div>
+      <div className="ph-s">Every feature below is in your {price}/month. No hidden charges. No per-transaction fees.</div>
       <div className="fg">
         {features.map((f, i) => (
           <div className="fc" key={i} data-testid={`feature-card-${i}`}>
@@ -92,31 +79,20 @@ function FeaturesScreen() {
   );
 }
 
-function CompareScreen() {
-  const rows = [
-    ['Monthly fee', '$0', '$0', '$799 flat', true],
-    ['Commission per order', '25–35%', '25–30%', '0%', true],
-    ['$35 order — you keep', '~$24', '~$25', '$35.00', true],
-    ['You own the customer', '✗', '✗', '✓', true],
-    ['Punjabi / Hindi support', '✗', '✗', '✓', true],
-    ['Returning customer memory', '✗', '✗', '✓', true],
-    ['24/7 phone ordering', '✗', '✗', '✓', true],
-    ['Break-even at', '—', '—', '~27 orders/month', true, true],
-  ];
+function CompareScreen({ compare, name }) {
   return (
     <>
       <div className="ph-eyebrow">The Honest Numbers</div>
-      <div className="ph-h">Uber Eats is taking<br /><em>thousands from Desi Road.</em></div>
-      <div className="ph-s">Every month. Every order. Silently. The commission math is brutal.</div>
+      <div className="ph-h">See how Zivio compares<br /><em>to the alternatives.</em></div>
       <table className="ct" data-testid="compare-table">
-        <thead><tr><th>Feature</th><th>Uber Eats</th><th>DoorDash</th><th>Zivio ✓</th></tr></thead>
+        <thead><tr><th>Feature</th>{compare.competitors.map((c, i) => <th key={i}>{c}</th>)}<th>Zivio</th></tr></thead>
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className={r[5] ? 'hl' : ''}>
+          {compare.rows.map((r, i) => (
+            <tr key={i} className={i === compare.rows.length - 1 ? 'hl' : ''}>
               <td>{r[0]}</td>
-              <td className={!r[3] ? '' : 'no'}>{r[1]}</td>
-              <td className={!r[3] ? '' : 'no'}>{r[2]}</td>
-              <td className="yes">{r[3] === true ? r[3] : r[3]}</td>
+              <td className="no">{r[1]}</td>
+              <td className="no">{r[2]}</td>
+              <td className="yes">{r[3]}</td>
             </tr>
           ))}
         </tbody>
@@ -125,79 +101,79 @@ function CompareScreen() {
   );
 }
 
-function KitchenScreen() {
+function AlertsScreen({ name, type }) {
+  const isService = ['dentist', 'doctor', 'trades'].includes(type);
   return (
     <>
-      <div className="ph-eyebrow">Kitchen Alert System</div>
-      <div className="ph-h">Every order to the kitchen<br /><em>in under 3 seconds.</em></div>
-      <div className="ph-s">The moment a customer confirms, the kitchen receives a fully formatted ticket. Zero manual entry. Zero missed orders.</div>
+      <div className="ph-eyebrow">{isService ? 'Team Alert System' : 'Kitchen Alert System'}</div>
+      <div className="ph-h">Every {isService ? 'booking' : 'order'} to your team<br /><em>in under 3 seconds.</em></div>
+      <div className="ph-s">The moment a {isService ? 'patient confirms' : 'customer confirms'}, your team receives a full alert. Zero manual entry.</div>
       <div className="flow">
-        <FlowItem icon="📱" title="WhatsApp to kitchen phone" desc="Full ticket instantly. Clear, unambiguous, no errors." />
-        <FlowItem icon="🖨️" title="Bluetooth receipt printer" desc="$45 one-time hardware. Order prints automatically." />
-        <FlowItem icon="✅" title="Order ready → customer alert" desc='AI messages customer: "Your order is ready at Desi Road!"' />
-        <FlowItem icon="📋" title="Full order log" desc="Every order stored — time, items, language, returning flag." />
+        <FlowItem icon="📱" title="WhatsApp to team phone" desc="Full details instantly. Clear and unambiguous." />
+        <FlowItem icon="✅" title={isService ? 'Confirmation sent to patient' : 'Ready notification to customer'} desc={`AI messages: "Your ${isService ? 'appointment' : 'order'} at ${name} is confirmed!"`} />
+        <FlowItem icon="📋" title="Full log" desc={`Every ${isService ? 'booking' : 'order'} stored — time, details, language, returning flag.`} />
       </div>
     </>
   );
 }
 
-function CampaignScreen() {
+function CampaignScreen({ name, type }) {
+  const isService = ['dentist', 'doctor', 'pharmacy'].includes(type);
   return (
     <>
-      <div className="ph-eyebrow">Daily Special Campaigns</div>
-      <div className="ph-h">One message.<br /><em>300 customers. 40 orders.</em></div>
-      <div className="ph-s">Every day at 11am, Zivio broadcasts Desi Road's daily special to the full subscriber list — in all 3 languages simultaneously.</div>
+      <div className="ph-eyebrow">{isService ? 'Patient Outreach' : 'Daily Campaigns'}</div>
+      <div className="ph-h">One message.<br /><em>{isService ? '300 patients. 40 bookings.' : '300 customers. 40 orders.'}</em></div>
+      <div className="ph-s">Zivio broadcasts your {isService ? 'health reminders and specials' : 'daily specials'} to your full subscriber list — in all 3 languages.</div>
       <div className="stats">
         <div className="stat gold"><div className="sv">284</div><div className="sl">Subscribers receiving the broadcast</div></div>
-        <div className="stat green"><div className="sv">47</div><div className="sl">Orders in 2 hours of one broadcast</div></div>
-        <div className="stat gold"><div className="sv">$1,034</div><div className="sl">Revenue from a single automated message</div></div>
+        <div className="stat green"><div className="sv">47</div><div className="sl">{isService ? 'Bookings from one broadcast' : 'Orders from one broadcast'}</div></div>
+        <div className="stat gold"><div className="sv">$1,034</div><div className="sl">Revenue from a single message</div></div>
         <div className="stat green"><div className="sv">$7.10</div><div className="sl">Total cost for that broadcast</div></div>
       </div>
     </>
   );
 }
 
-function PricingScreen() {
+function PricingScreen({ pricing, name, config }) {
   return (
     <>
       <div className="ph-eyebrow">Pricing & Guarantee</div>
       <div className="ph-h">One price. Everything.<br /><em>Zero risk.</em></div>
       <div className="price-card" data-testid="pricing-card">
-        <div className="price-amount">$799</div>
-        <div className="price-period">/month CAD · First month completely free · No contract</div>
+        <div className="price-amount">{pricing.amount}</div>
+        <div className="price-period">{pricing.period}</div>
         <ul className="price-items">
           <li>Full setup and configuration — included free</li>
-          <li>WhatsApp on Desi Road's existing number</li>
-          <li>24/7 phone voice agent on (437) 331-5615</li>
-          <li>English + Punjabi + Hindi + code-switching</li>
-          <li>Customer memory + returning customer recognition</li>
-          <li>Add-to-existing-order within 60 minutes</li>
-          <li>Kitchen alert system</li>
-          <li>Daily special campaigns</li>
+          <li>WhatsApp on {name}'s existing number</li>
+          <li>24/7 AI agent on {config.phone}</li>
+          <li>English + Punjabi + Hindi + auto-detect</li>
+          <li>Customer memory + returning recognition</li>
+          <li>Team alert system</li>
+          <li>Campaign broadcasts</li>
           <li>Google review automation</li>
-          <li>Commission per order — $0 forever</li>
+          <li>Zero commission — flat fee forever</li>
         </ul>
       </div>
       <div className="guarantee" data-testid="guarantee-section">
-        <div className="guarantee-title">🛡️ The Zivio 30-Day Guarantee</div>
-        <p style={{ fontSize: 13, color: 'var(--mu)', lineHeight: 1.6 }}>If Zivio does not generate more in recovered orders and saved commission than $799 in your first 30 days — we refund every dollar. No questions. The first month is free anyway. We take all the risk.</p>
+        <div className="guarantee-title">The Zivio 30-Day Guarantee</div>
+        <p style={{ fontSize: 13, color: 'var(--mu)', lineHeight: 1.6 }}>If Zivio doesn't generate more in value than {pricing.amount} in your first 30 days — full refund. No questions. First month is free anyway.</p>
       </div>
     </>
   );
 }
 
-function StartScreen({ onNavigate }) {
+function StartScreen({ name, onNavigate }) {
   return (
     <>
       <div className="ph-eyebrow">Let's Get Started</div>
-      <div className="ph-h">Desi Road goes live<br /><em>in 5 days.</em></div>
-      <div className="ph-s">No payment. No technical work from you or your team. Nik handles everything.</div>
+      <div className="ph-h">{name} goes live<br /><em>in 5 days.</em></div>
+      <div className="ph-s">No payment. No technical work from you. We handle everything.</div>
       <div className="flow">
-        <FlowItem num="1" title="Today — Handshake. Zero payment." desc="Nik needs: your WhatsApp number, a copy of your menu, and 1 hour this week." />
-        <FlowItem num="2" title="Day 1–2 — Nik builds the full system" desc="Menu configured in 3 languages. WhatsApp connected. Phone set up. Kitchen alerts ready." />
-        <FlowItem num="3" title="Day 3 — Live test together at Desi Road" desc="Order in Punjabi. Call the number. Confirm a kitchen alert. Staff briefed in 10 minutes." />
-        <FlowItem num="4" title="Day 5 — Go live. Orders start." desc="Every missed call, every WhatsApp at 10pm, every Punjabi customer — answered." />
-        <FlowItem num="5" title="Day 30 — Review results. Pay only if it worked." desc="If the numbers don't justify $799 — full refund, no argument." />
+        <FlowItem num="1" title="Today — Handshake. Zero payment." desc="We need: your phone number, service list, and 1 hour this week." />
+        <FlowItem num="2" title="Day 1–2 — We build your system" desc="Services configured in 3 languages. WhatsApp connected. Alerts ready." />
+        <FlowItem num="3" title="Day 3 — Live test together" desc="Test in Punjabi. Call the number. Confirm an alert. Staff briefed in 10 minutes." />
+        <FlowItem num="4" title="Day 5 — Go live." desc="Every missed call, every message — answered. 24/7." />
+        <FlowItem num="5" title="Day 30 — Pay only if it worked." desc="Full refund if the numbers don't justify the price." />
       </div>
       <div className="btn-row"><button className="btn btn-gold" data-testid="try-demo-btn" onClick={() => onNavigate('demo')}>Try the Demo →</button></div>
     </>

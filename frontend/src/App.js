@@ -8,6 +8,8 @@ import ContentScreens from "@/components/ContentScreens";
 import AdminPanel from "@/components/AdminPanel";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import CustomDemoBar from "@/components/CustomDemoBar";
+import BusinessTypeSelector from "@/components/BusinessTypeSelector";
+import { BUSINESS_TEMPLATES } from "@/utils/businessTemplates";
 import { Phone, Volume2, VolumeX, Radio } from "lucide-react";
 
 const DESI_ROAD_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
@@ -19,7 +21,10 @@ function ZivioApp() {
   const [orderItems, setOrderItems] = useState([]);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderData, setOrderData] = useState(null);
+  const [businessType, setBusinessType] = useState('restaurant');
   const currentAudioRef = useRef(null);
+
+  const bt = BUSINESS_TEMPLATES[businessType] || BUSINESS_TEMPLATES.restaurant;
 
   const toggleSpeaker = useCallback(() => {
     setSpeakerOn(prev => {
@@ -32,20 +37,29 @@ function ZivioApp() {
     });
   }, []);
 
+  const handleTemplateApplied = useCallback((type) => {
+    setBusinessType(type);
+    setOrderItems([]);
+    setOrderConfirmed(false);
+    setOrderData(null);
+    setActiveScreen('demo');
+  }, []);
+
   const navItems = [
     { section: 'Presentation' },
     { id: 'problem', label: 'The Problem', color: 'red', icon: '😔' },
     { id: 'solution', label: 'The Solution', color: 'green', icon: '💡' },
     { section: 'Live Demo' },
-    { id: 'demo', label: 'AI Ordering Demo', color: 'gold', icon: '💬' },
+    { id: 'demo', label: 'AI Demo', color: 'gold', icon: '💬' },
     { section: 'Business Case' },
     { id: 'features', label: 'All Features', color: 'green', icon: '⚡' },
-    { id: 'compare', label: 'vs Uber Eats', color: 'red', icon: '⚖️' },
-    { id: 'kitchen', label: 'Kitchen Alerts', color: 'gold', icon: '🔔' },
-    { id: 'campaign', label: 'Daily Specials', color: 'gold', icon: '📢' },
+    { id: 'compare', label: 'vs Alternatives', color: 'red', icon: '⚖️' },
+    { id: 'kitchen', label: 'Team Alerts', color: 'gold', icon: '🔔' },
+    { id: 'campaign', label: 'Campaigns', color: 'gold', icon: '📢' },
     { id: 'pricing', label: 'Pricing', color: 'cream', icon: '💰' },
     { id: 'start', label: 'Get Started', color: 'green', icon: '✅' },
     { section: 'System' },
+    { id: 'templates', label: 'Business Templates', color: 'gold', icon: '🏢' },
     { id: 'admin', label: 'Admin Panel', color: 'gold', icon: '⚙️' },
     { id: 'analytics', label: 'Analytics', color: 'green', icon: '📊' },
   ];
@@ -55,13 +69,13 @@ function ZivioApp() {
       {/* TOPBAR */}
       <div className="topbar" data-testid="topbar">
         <div className="t-brand">
-          <img className="t-logo" src={DESI_ROAD_LOGO} alt="Desi Road" onError={e => e.target.style.display = 'none'} />
+          <img className="t-logo" src={bt.config.logo_url || DESI_ROAD_LOGO} alt="" onError={e => e.target.style.display = 'none'} />
           <div>
             <div className="t-name">ZIVIO AI</div>
-            <div className="t-sub">AI Ordering System — Demo</div>
+            <div className="t-sub">{bt.label} — Demo</div>
           </div>
         </div>
-        <div className="t-tag">Desi Daru Desi Khana</div>
+        <div className="t-tag">{bt.config.brand_tagline}</div>
         <div className="t-right">
           <button className="tbtn green" data-testid="demo-call-btn" onClick={() => setShowCallModal(true)}>
             <Phone size={13} style={{ marginRight: 4 }} /> Demo Call
@@ -80,8 +94,8 @@ function ZivioApp() {
         {/* SIDEBAR */}
         <div className="sidebar" data-testid="sidebar">
           <div className="sb-brand">
-            <div className="sb-brand-name">Desi Road Restaurant</div>
-            <div className="sb-brand-tag">Elevated Indian Cuisine · Brampton</div>
+            <div className="sb-brand-name">{bt.config.name}</div>
+            <div className="sb-brand-tag">{bt.config.tagline} · {bt.config.city}</div>
           </div>
           <div className="sb-inner">
             {navItems.map((item, i) =>
@@ -101,8 +115,8 @@ function ZivioApp() {
           </div>
           <div className="sb-foot">
             <div className="gbox">
-              <div className="gbox-t">🛡️ 30-Day Guarantee</div>
-              <div className="gbox-b">More orders in Month 1 than the fee — or every dollar back.</div>
+              <div className="gbox-t">30-Day Guarantee</div>
+              <div className="gbox-b">More value in Month 1 than the fee — or every dollar back.</div>
             </div>
           </div>
         </div>
@@ -114,7 +128,7 @@ function ZivioApp() {
               <div className="demo-header">
                 <div className="ph-eyebrow">Live Demo — Try It Now</div>
                 <div className="ph-h">Your customer. Your number.<br /><em>One AI. Every language.</em></div>
-                <div className="ph-s">This is exactly what a customer experiences on WhatsApp or phone. Type in English, Punjabi, Hindi — or mix all three. The AI handles it all, remembers returning customers, and never misses an order.</div>
+                <div className="ph-s">This is exactly what a customer experiences on WhatsApp or phone. Type in English, Punjabi, Hindi — or mix all three.</div>
               </div>
               <CustomDemoBar />
               <div className="chat-wrap">
@@ -139,21 +153,19 @@ function ZivioApp() {
               </div>
             </div>
           )}
-          {activeScreen !== 'demo' && activeScreen !== 'admin' && activeScreen !== 'analytics' && (
-            <ContentScreens screen={activeScreen} onNavigate={setActiveScreen} />
+          {activeScreen === 'templates' && (
+            <BusinessTypeSelector onApplied={handleTemplateApplied} activeType={businessType} />
           )}
           {activeScreen === 'admin' && <AdminPanel />}
           {activeScreen === 'analytics' && <AnalyticsDashboard />}
+          {!['demo', 'templates', 'admin', 'analytics'].includes(activeScreen) && (
+            <ContentScreens screen={activeScreen} onNavigate={setActiveScreen} businessType={businessType} />
+          )}
         </div>
       </div>
 
-      {/* CALL MODAL */}
       {showCallModal && (
-        <CallModal
-          onClose={() => setShowCallModal(false)}
-          speakerOn={speakerOn}
-          currentAudioRef={currentAudioRef}
-        />
+        <CallModal onClose={() => setShowCallModal(false)} speakerOn={speakerOn} currentAudioRef={currentAudioRef} />
       )}
     </div>
   );
