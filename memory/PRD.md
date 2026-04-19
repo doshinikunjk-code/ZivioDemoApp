@@ -1,74 +1,56 @@
 # Zivio AI - Desi Road Ordering System PRD
 
 ## Original Problem Statement
-User shared 7 files of their existing Node.js/HTML application (Zivio AI - restaurant ordering demo for Desi Road, Brampton). Requested: voice AI with complete Indian accent, Hindi/Punjabi/English conversation support, background noise handling, 100% human touch with emotions, professional pitch-ready for approaching hotels in Brampton.
+User shared 7 files of existing Node.js/HTML app (Zivio AI - restaurant ordering demo for Desi Road, Brampton). Requested: voice AI with Indian accent, Hindi/Punjabi/English, background noise handling, 100% human touch, professional pitch. Phase 2: configurable restaurant, WhatsApp integration, kitchen/reception alerts, Google Review automation, analytics dashboard.
 
 ## Architecture
-- **Backend**: FastAPI (Python) with emergentintegrations for Claude AI chat, httpx for ElevenLabs TTS proxy
-- **Frontend**: React with custom CSS (faithful recreation of original dark/gold theme)
-- **Database**: MongoDB (available but not actively used for chat sessions - sessions stored in-memory)
-- **AI**: Claude Haiku 4.5 via Emergent LLM Key for chat, ElevenLabs for TTS
+- **Backend**: FastAPI (Python) with emergentintegrations for Claude AI, httpx for ElevenLabs TTS, Twilio for WhatsApp
+- **Frontend**: React with custom CSS (dark/gold theme)
+- **Database**: MongoDB (restaurants, orders, analytics collections)
+- **AI**: Claude Haiku 4.5 via Emergent LLM Key, ElevenLabs paid plan for TTS
+- **Integrations**: Twilio WhatsApp (ready-to-connect), Google Review (ready-to-connect)
 
-## User Personas
-1. **Restaurant Owner** (pitch target) - Viewing the demo to see how AI ordering works
-2. **Customer** (simulated in demo) - Ordering food in English, Punjabi, or Hindi
-3. **Nik** (Zivio sales person) - Presenting the demo to restaurant owners
+## What's Been Implemented
 
-## Core Requirements (Static)
-- AI ordering assistant for Desi Road restaurant
-- Multi-language support: English, Punjabi (Gurmukhi), Hindi (Devanagari)
-- Voice AI with Indian accent (ElevenLabs TTS + browser STT)
-- Background noise filtering (confidence threshold + minimum word count)
-- Human-touch AI responses with Indian fillers (ji, haan, achha, bilkul)
-- Emotional AI responses (warm, appreciative, empathetic)
-- Order detection and tracking from chat
-- Customer memory (returning customer recognition via localStorage)
-- Add-to-existing-order support (within 60 min window)
-- Kitchen alert simulation on order confirmation
-- Demo call simulation modal
-- Business case presentation screens (Problem, Solution, Features, Compare, Kitchen, Campaign, Pricing, Get Started)
+### Phase 1 (2026-04-19)
+- Full React + FastAPI rebuild from original Node.js/HTML
+- Claude AI chat with Indian fillers (ji, haan, achha, bilkul)
+- ElevenLabs TTS with Hindi primer for Indian accent
+- Background noise filtering (confidence threshold + min word count)
+- Order detection in English/Punjabi/Hindi
+- All 8 presentation screens
+- Demo call modal, language switching, quick suggestions
 
-## What's Been Implemented (2026-04-19)
-- Full React + FastAPI rebuild from original Node.js/HTML monolith
-- Claude AI chat via Emergent LLM Key with session management
-- ElevenLabs TTS proxy with Hindi primer for Indian accent
-- Background noise filtering: confidence threshold (0.55+), minimum word count
-- Conversation state machine: prevents restart on background noise
-- Indian filler words in AI system prompt (ji, haan, achha, bilkul, zaroor)
-- Emotional AI responses (warm, appreciative)
-- Order item detection from chat in multiple languages
-- Order deduplication logic
-- Order confirmation with kitchen ticket display
-- All 8 presentation screens faithfully recreated
-- Demo call modal with speech recognition
-- Language tab switching (Auto/English/Punjabi/Hindi)
-- Quick suggestion buttons
-- Responsive design
-- Browser SpeechSynthesis fallback for TTS
+### Phase 2 (2026-04-19)
+- **Restaurant Configuration Admin Panel**: Full CRUD for name, tagline, city, phone, location, hours, logo, menu items (add/remove), special of the day, brand tagline, monthly price
+- **Dynamic AI Prompts**: System prompt auto-generated from restaurant config in MongoDB
+- **Order Persistence**: All orders stored in MongoDB with status tracking
+- **Twilio WhatsApp Integration** (ready-to-connect): Send/receive WhatsApp messages, webhook endpoint for incoming messages, auto-reply with AI
+- **Kitchen Alerts**: Auto WhatsApp alert to kitchen phone on order confirmation
+- **Reception Alerts**: Auto WhatsApp alert to reception on order confirmation
+- **Google Review Automation**: Auto review request to customer after order, configurable Google Place ID and review URL
+- **Analytics Dashboard**: Total orders, conversations, revenue estimate, messages exchanged, WhatsApp messages sent, kitchen alerts, review requests, orders by language, recent orders table
+- **Test Alert Buttons**: Test kitchen/reception alerts from admin panel
+- **ElevenLabs TTS Working**: Paid plan enabled, TTS returns 200 with audio
 
-## Known Limitations
-- ElevenLabs TTS may return 500 if the API key is on free tier and blocked by abuse detection
-- Browser SpeechSynthesis fallback works but with less natural voice
-- Chat sessions stored in-memory (not persisted across server restarts)
+## Test Results
+- Phase 1: 100% (11/11 backend, all frontend)
+- Phase 2: 100% (15/15 backend, all frontend)
+
+## MongoDB Collections
+- `restaurants`: Restaurant configurations (seeded with Desi Road default)
+- `orders`: All orders with status, alerts, review tracking
+- `analytics`: Event tracking for all system activity
 
 ## Prioritized Backlog
-### P0 (Critical)
-- None remaining
-
-### P1 (Important)
-- Persist chat sessions to MongoDB for durability
-- Add ElevenLabs paid key or alternative TTS service
-- WhatsApp Business API integration for real ordering
-
-### P2 (Nice to have)
-- Analytics dashboard for demo engagement tracking
-- Multiple restaurant configuration support
-- Real kitchen alert integration (WhatsApp API or printer)
-- Google Review automation integration
-- Daily special campaign scheduler
-
-## Next Tasks
-1. Upgrade ElevenLabs to paid tier for reliable TTS
-2. Add WhatsApp Business API integration
-3. Add analytics tracking for pitch demos
-4. Make restaurant configurable (not just Desi Road)
+### P0 - None remaining
+### P1
+- Connect real Twilio credentials for live WhatsApp ordering
+- Add Twilio phone number for voice calls (IVR)
+- Admin panel: add new restaurant (multi-tenant)
+### P2
+- Daily special campaign scheduler (auto broadcast at 11am)
+- Customer loyalty tracking (visit count, preferences)
+- Real-time order status updates (WebSocket)
+- Staff management and permissions
+- Revenue reports with charts (Recharts)
