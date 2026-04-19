@@ -21,7 +21,9 @@ function ZivioApp() {
   const [orderItems, setOrderItems] = useState([]);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderData, setOrderData] = useState(null);
-  const [businessType, setBusinessType] = useState('restaurant');
+  const [businessType, setBusinessType] = useState(() => {
+    try { return localStorage.getItem('zivio_business_type') || 'restaurant'; } catch { return 'restaurant'; }
+  });
   const currentAudioRef = useRef(null);
 
   const bt = BUSINESS_TEMPLATES[businessType] || BUSINESS_TEMPLATES.restaurant;
@@ -32,11 +34,11 @@ function ZivioApp() {
     const theme = bt.theme || {};
     const touched = Object.keys(theme);
     touched.forEach(k => root.style.setProperty(k, theme[k]));
+    try { localStorage.setItem('zivio_business_type', businessType); } catch {}
     return () => {
-      // Reset so next template doesn't inherit stale overrides
       touched.forEach(k => root.style.removeProperty(k));
     };
-  }, [bt]);
+  }, [bt, businessType]);
 
   const toggleSpeaker = useCallback(() => {
     setSpeakerOn(prev => {
