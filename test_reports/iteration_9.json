@@ -1,0 +1,39 @@
+{
+  "summary": "Phase 9 — post-refactor regression + TTS hash-cache + X-Twilio-Signature validation. All 26 new tests pass (test_zivio_phase9_refactor.py) and all 31 previous tests (phase6+7+8) still green. Frontend loads with 0 console errors. Admin Panel shows WhatsApp + Voice IVR. Pricing shows $599. Chat still emits exactly 1 /api/tts POST per reply (double-read fix intact).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_zivio_phase9_refactor.py",
+    "/app/test_reports/pytest/pytest_phase9_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now a clean 37-line app factory registering 10 routers under /api prefix — matches brief (<50 lines).",
+    "routes/tts.py hash-cache is solid: SHA-256(clean_text|voice_id|model_id), LRU OrderedDict with 300-entry cap + 600s TTL, verified MISS→HIT→HIT flow with different-text / different-voice isolation passing.",
+    "twilio_helpers.validate_twilio_signature correctly reads x-forwarded-proto / x-forwarded-host for URL reconstruction behind proxy; in dev with no TWILIO_AUTH_TOKEN it emits 'Twilio signature validation SKIPPED — no auth token configured (dev mode)' WARNING and proceeds — confirmed in /var/log/supervisor/backend.err.log.",
+    "Consider: chat_sessions dict in core.py still unbounded (inherited from before); add LRU cap / TTL eviction — not blocking.",
+    "Consider: routes/voice_ivr.py also has its own _TTS_CACHE (for <Play> URLs) which overlaps purpose with routes/tts.py _HASH_CACHE. The IVR cache is short-lived (120s, 200 entries) for Twilio media fetch whereas _HASH_CACHE serves Listen-button repeats. Distinct purposes — acceptable, but document the split.",
+    "routes/orders.py uses lazy imports to avoid circular dep with routes/alerts.py — clean workaround, but consider moving alert helpers into a shared alerts_helpers.py module.",
+    "Existing phase6/7/8 test files require REACT_APP_BACKEND_URL env var to be exported before pytest (no default fallback). Minor DX issue; phase9 file uses a safe default."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_zivio_phase9_refactor.py"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26 phase9 + 31/31 prior regression)",
+    "frontend": "100% — loaded with 0 console errors, Admin shows WhatsApp + Voice IVR, Pricing shows $599, chat still deduped to 1 TTS POST per reply"
+  },
+  "test_credentials": "No auth required; see /app/memory/test_credentials.md",
+  "seed_data_creation": "None — ran against existing seeded default restaurant",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Refactor verified: server.py is now 37 lines of app-factory only; all 10 routers under /app/backend/routes/ work identically to the old monolith. TTS hash-cache behavior: first call returns X-Cache: MISS (real ElevenLabs hit, ~2-5s), identical subsequent call returns X-Cache: HIT (<50ms, from OrderedDict). Cache key = sha256(clean_text|voice_id|model_id) so different voice_id always MISSes. X-Twilio-Signature: in dev mode (no TWILIO_AUTH_TOKEN) validation is SKIPPED with a WARNING log; to enforce in prod set TWILIO_AUTH_TOKEN env var — validate_twilio_signature reads x-forwarded-proto/host for correct URL reconstruction behind proxy. Note: default seeded restaurant currently shows as 'ProFix Home Services' (Skilled Trades template) because of previous template-switch session; twilio_voice_number=+14375236468 and monthly_price=$599 both persist correctly. Frontend sidebar can still display 'Desi Road Restaurant' depending on active template — this is frontend state, not backend.",
+  "rca_of_the_issue": "N/A — no bugs found. Refactor is clean, behavior preserved, two new features (hash-cache + signature validation) verified working with appropriate dev-mode fallback."
+}
