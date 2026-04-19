@@ -5,6 +5,8 @@ import ChatPanel from "@/components/ChatPanel";
 import OrderPanel from "@/components/OrderPanel";
 import CallModal from "@/components/CallModal";
 import ContentScreens from "@/components/ContentScreens";
+import AdminPanel from "@/components/AdminPanel";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { Phone, Volume2, VolumeX, Radio } from "lucide-react";
 
 const DESI_ROAD_LOGO = "https://desiroad.ca/wp-content/uploads/2016/10/DESI-ROAD-LOGO-1.jpg";
@@ -42,6 +44,9 @@ function ZivioApp() {
     { id: 'campaign', label: 'Daily Specials', color: 'gold', icon: '📢' },
     { id: 'pricing', label: 'Pricing', color: 'cream', icon: '💰' },
     { id: 'start', label: 'Get Started', color: 'green', icon: '✅' },
+    { section: 'System' },
+    { id: 'admin', label: 'Admin Panel', color: 'gold', icon: '⚙️' },
+    { id: 'analytics', label: 'Analytics', color: 'green', icon: '📊' },
   ];
 
   return (
@@ -132,9 +137,11 @@ function ZivioApp() {
               </div>
             </div>
           )}
-          {activeScreen !== 'demo' && (
+          {activeScreen !== 'demo' && activeScreen !== 'admin' && activeScreen !== 'analytics' && (
             <ContentScreens screen={activeScreen} onNavigate={setActiveScreen} />
           )}
+          {activeScreen === 'admin' && <AdminPanel />}
+          {activeScreen === 'analytics' && <AnalyticsDashboard />}
         </div>
       </div>
 

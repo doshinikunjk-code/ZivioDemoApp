@@ -171,7 +171,19 @@ export default function ChatPanel({
     setOrderConfirmed(true);
     const data = saveOrder([...orderItems]);
     setOrderData(data);
-  }, [orderItems, setOrderConfirmed, saveOrder, setOrderData]);
+
+    // Persist order to backend
+    fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        restaurant_id: 'default',
+        items: orderItems,
+        session_id: sessionId,
+        language: lang
+      })
+    }).catch(() => {});
+  }, [orderItems, setOrderConfirmed, saveOrder, setOrderData, sessionId, lang]);
 
   const sendMessage = useCallback(async (text) => {
     if (!text || typing) return;
